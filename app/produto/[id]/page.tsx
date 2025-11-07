@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, use as usePromise } from "react"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
@@ -13,38 +13,54 @@ import { supabase, mapDbToProduct, type ProdutoDb } from "@/lib/supabase"
 import { formatBRL } from "@/lib/utils"
 
 interface ProductPageProps {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
 export default function ProductPage({ params }: ProductPageProps) {
+  const { id } = usePromise(params)
   const [product, setProduct] = useState<any | null>(null)
   const [relatedProducts, setRelatedProducts] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const load = async () => {
       if (!supabase) {
+        setLoading(false)
         return
       }
       const { data, error } = await supabase
         .from<ProdutoDb>("produtos")
         .select("*")
-        .eq("id", Number(params.id))
+        .eq("id", Number(id))
         .maybeSingle()
       if (!error && data) {
         const mapped = mapDbToProduct(data)
         setProduct(mapped)
       }
       const { data: list } = await supabase.from<ProdutoDb>("produtos").select("*").limit(3)
-      if (list) setRelatedProducts(list.map(mapDbToProduct).filter((p) => p.id !== params.id))
+      if (list) setRelatedProducts(list.map(mapDbToProduct).filter((p) => p.id !== id))
+      setLoading(false)
     }
     load()
-  }, [params.id])
+  }, [id])
 
   const [quantity, setQuantity] = useState(1)
   const [isWishlisted, setIsWishlisted] = useState(false)
   const [showVideoModal, setShowVideoModal] = useState(false)
   const { addItem } = useCart()
   const [addedToCart, setAddedToCart] = useState(false)
+
+  if (loading) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Header />
+        <main className="flex-1 flex items-center justify-center">
+          <p className="text-muted-foreground">Carregando produto...</p>
+        </main>
+        <Footer />
+      </div>
+    )
+  }
 
   if (!product) {
     return (
