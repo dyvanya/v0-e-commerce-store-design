@@ -4,12 +4,15 @@ export interface Product {
   description: string
   price: number
   image: string
+  images?: string[]
   video?: string
+  checkoutUrl?: string
   category: string
   paymentType: "cod" | "delivery" // cod = cash on delivery, delivery = entrega pessoal
   stock: number
   rating?: number
   reviews?: number
+  featured?: boolean
 }
 
 export interface CartItem {

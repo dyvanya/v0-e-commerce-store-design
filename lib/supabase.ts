@@ -15,7 +15,11 @@ export interface ProdutoDb {
   descricao: string
   preco: number
   imagem_url: string
+  imagens?: string[] | null
+  video_url?: string | null
+  checkout_url?: string | null
   disponibilidade?: string | null
+  destaque?: boolean | null
   criado_em?: string | null
 }
 
@@ -28,10 +32,14 @@ export function mapDbToProduct(row: ProdutoDb) {
     description: row.descricao,
     price: Number(row.preco),
     image: row.imagem_url,
+    images: row.imagens || undefined,
+    video: row.video_url || undefined,
+    checkoutUrl: row.checkout_url || undefined,
     category: "geral",
     paymentType: "cod" as const,
     stock: estoque,
     rating: 4.7,
     reviews: 18,
+    featured: !!row.destaque,
   }
 }

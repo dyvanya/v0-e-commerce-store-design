@@ -1,13 +1,30 @@
+"use client"
+
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
-import { productsData } from "@/lib/products-data"
 import { ProductCard } from "@/components/product-card"
 import Link from "next/link"
 import { ArrowRight, Package, Truck, Heart } from "lucide-react"
+import { useEffect, useState } from "react"
+import { supabase, mapDbToProduct, type ProdutoDb } from "@/lib/supabase"
 
 export default function Home() {
-  const featuredProducts = productsData.slice(0, 3)
+  const [featuredProducts, setFeaturedProducts] = useState<any[]>([])
+
+  useEffect(() => {
+    const load = async () => {
+      if (!supabase) return
+      const { data } = await supabase
+        .from<ProdutoDb>("produtos")
+        .select("*")
+        .eq("destaque", true)
+        .order("criado_em", { ascending: false })
+        .limit(6)
+      if (data) setFeaturedProducts(data.map(mapDbToProduct))
+    }
+    load()
+  }, [])
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -34,11 +51,7 @@ export default function Home() {
 
             {/* Imagem destaque */}
             <div className="relative aspect-video rounded-lg overflow-hidden shadow-xl">
-              <img
-                src="/hero-produtos-pasteis.png"
-                alt="Produtos Aqui Tem Tudo"
-                className="w-full h-full object-cover"
-              />
+              <img src="/loja-elegante-produtos-feminino-masculino.jpg" alt="Produtos Aqui Tem Tudo" className="w-full h-full object-cover" />
             </div>
           </div>
         </section>

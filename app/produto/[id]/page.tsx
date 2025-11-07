@@ -21,6 +21,7 @@ export default function ProductPage({ params }: ProductPageProps) {
   const [product, setProduct] = useState<any | null>(null)
   const [relatedProducts, setRelatedProducts] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [mainImage, setMainImage] = useState<string | null>(null)
 
   useEffect(() => {
     const load = async () => {
@@ -36,6 +37,7 @@ export default function ProductPage({ params }: ProductPageProps) {
       if (!error && data) {
         const mapped = mapDbToProduct(data)
         setProduct(mapped)
+        setMainImage(mapped.image)
       }
       const { data: list } = await supabase.from<ProdutoDb>("produtos").select("*").limit(3)
       if (list) setRelatedProducts(list.map(mapDbToProduct).filter((p) => p.id !== id))
@@ -124,28 +126,30 @@ export default function ProductPage({ params }: ProductPageProps) {
               <div>
                 <div className="bg-muted rounded-lg overflow-hidden mb-4 relative aspect-square">
                   <img
-                    src={product.image || "/placeholder.svg"}
+                    src={mainImage || product.image || "/placeholder.svg"}
                     alt={product.name}
                     className="w-full h-full object-cover"
                   />
                 </div>
 
+                {product.images && product.images.length > 0 && (
+                  <div className="flex gap-2 flex-wrap">
+                    {[product.image, ...(product.images || [])].filter(Boolean).map((img, idx) => (
+                      <button
+                        key={idx}
+                        className={`h-16 w-16 rounded border ${mainImage === img ? "border-primary" : "border-border"}`}
+                        onClick={() => setMainImage(img!)}
+                      >
+                        <img src={img!} alt="thumb" className="h-full w-full object-cover rounded" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+
                 {/* Vídeo */}
                 {product.video && (
-                  <div
-                    className="bg-muted rounded-lg overflow-hidden cursor-pointer relative aspect-video group"
-                    onClick={() => setShowVideoModal(true)}
-                  >
-                    <img
-                      src={product.video || "/placeholder.svg"}
-                      alt="Vídeo do produto"
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center group-hover:bg-black/50 transition-colors">
-                      <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center">
-                        <div className="w-0 h-0 border-l-8 border-l-primary border-t-5 border-t-transparent border-b-5 border-b-transparent ml-1" />
-                      </div>
-                    </div>
+                  <div className="mt-4">
+                    <Button variant="outline" className="bg-transparent" onClick={() => window.open(product.video!, "_blank")}>Assistir review no YouTube</Button>
                   </div>
                 )}
               </div>
@@ -256,6 +260,10 @@ export default function ProductPage({ params }: ProductPageProps) {
                     {isWishlisted ? "Adicionado" : "Favoritar"}
                   </Button>
                 </div>
+
+                {product.checkoutUrl && (
+                  <Button size="lg" className="w-full bg-accent hover:bg-accent/80 text-white" onClick={() => window.open(product.checkoutUrl!, "_blank")}>Ir para Checkout</Button>
+                )}
 
                 {/* Contato WhatsApp */}
                 <Button

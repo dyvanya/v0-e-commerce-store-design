@@ -16,6 +16,10 @@ type FormState = {
   disponibilidade: string
   imagemFile?: File | null
   imagem_url?: string
+  imagensFiles?: File[]
+  imagensUrls?: string[]
+  video_url?: string
+  checkout_url?: string
 }
 
 export default function AdminPage() {
@@ -23,7 +27,7 @@ export default function AdminPage() {
   const [items, setItems] = useState<ProdutoDb[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [form, setForm] = useState<FormState>({ nome: "", descricao: "", preco: "", disponibilidade: "" })
+  const [form, setForm] = useState<FormState>({ nome: "", descricao: "", preco: "", disponibilidade: "", imagensFiles: [], imagensUrls: [], video_url: "", checkout_url: "" })
   const bucket = process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET || "produtos"
 
   useEffect(() => {
@@ -47,7 +51,7 @@ export default function AdminPage() {
     })()
   }, [router])
 
-  const resetForm = () => setForm({ nome: "", descricao: "", preco: "", disponibilidade: "", imagemFile: null })
+  const resetForm = () => setForm({ nome: "", descricao: "", preco: "", disponibilidade: "", imagemFile: null, imagensFiles: [], imagensUrls: [], video_url: "", checkout_url: "" })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -75,12 +79,31 @@ export default function AdminPage() {
         imageUrl = publicUrl.publicUrl
       }
 
+      // Upload múltiplas imagens adicionais
+      let extraImages: string[] = []
+      if (form.imagensFiles && form.imagensFiles.length > 0) {
+        for (const file of form.imagensFiles) {
+          const path = `${Date.now()}-${file.name}`
+          const { error: upErr } = await supabase.storage.from(bucket).upload(path, file, {
+            cacheControl: "3600",
+            upsert: true,
+            contentType: file.type || "application/octet-stream",
+          })
+          if (upErr) throw upErr
+          const { data: publicUrl } = supabase.storage.from(bucket).getPublicUrl(path)
+          extraImages.push(publicUrl.publicUrl)
+        }
+      }
+
       if (!form.id) {
         const { error } = await supabase.from("produtos").insert({
           nome: form.nome,
           descricao: form.descricao,
           preco: Number(form.preco),
           imagem_url: imageUrl,
+          imagens: extraImages.length ? extraImages : null,
+          video_url: form.video_url || null,
+          checkout_url: form.checkout_url || null,
           disponibilidade: form.disponibilidade,
         })
         if (error) throw error
@@ -93,6 +116,9 @@ export default function AdminPage() {
             descricao: form.descricao,
             preco: Number(form.preco),
             imagem_url: imageUrl,
+            imagens: extraImages.length ? extraImages : form.imagensUrls || null,
+            video_url: form.video_url || null,
+            checkout_url: form.checkout_url || null,
             disponibilidade: form.disponibilidade,
           })
           .eq("id", form.id)
@@ -134,6 +160,11 @@ export default function AdminPage() {
       disponibilidade: item.disponibilidade || "",
       imagem_url: item.imagem_url,
       imagemFile: null,
+      imagensFiles: [],
+      imagensUrls: item.imagens || [],
+      video_url: item.video_url || "",
+      checkout_url: item.checkout_url || "",
+      destaque: Boolean(item.destaque),
     })
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
@@ -197,7 +228,7 @@ export default function AdminPage() {
                   </div>
                 </div>
                 <div>
-                  <label className="text-sm">Imagem</label>
+                  <label className="text-sm">Imagem principal</label>
                   <input
                     type="file"
                     accept="image/*"
@@ -207,6 +238,52 @@ export default function AdminPage() {
                   {form.imagem_url && (
                     <img src={form.imagem_url} alt="Atual" className="mt-2 h-24 rounded border" />
                   )}
+                </div>
+                <div>
+                  <label className="text-sm">Imagens adicionais</label>
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    className="w-full mt-1"
+                    onChange={(e) => setForm((f) => ({ ...f, imagensFiles: Array.from(e.target.files || []) }))}
+                  />
+                  {form.imagensUrls && form.imagensUrls.length > 0 && (
+                    <div className="mt-2 flex gap-2 flex-wrap">
+                      {form.imagensUrls.map((u, i) => (
+                        <img key={i} src={u} alt="" className="h-16 w-16 object-cover rounded border" />
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm">Link do vídeo (YouTube)</label>
+                    <input
+                      placeholder="https://youtube.com/..."
+                      className="w-full mt-1 px-3 py-2 border border-border rounded"
+                      value={form.video_url || ""}
+                      onChange={(e) => setForm((f) => ({ ...f, video_url: e.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm">Link do Checkout</label>
+                    <input
+                      placeholder="https://..."
+                      className="w-full mt-1 px-3 py-2 border border-border rounded"
+                      value={form.checkout_url || ""}
+                      onChange={(e) => setForm((f) => ({ ...f, checkout_url: e.target.value }))}
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    id="destaque"
+                    type="checkbox"
+                    checked={!!form.destaque}
+                    onChange={(e) => setForm((f) => ({ ...f, destaque: e.target.checked }))}
+                  />
+                  <label htmlFor="destaque" className="text-sm">Marcar como produto em destaque</label>
                 </div>
                 <div className="flex gap-3">
                   <Button type="submit" disabled={saving} className="bg-primary hover:bg-primary/90">
@@ -235,6 +312,10 @@ export default function AdminPage() {
                         <th className="p-2">Nome</th>
                         <th className="p-2">Preço</th>
                         <th className="p-2">Disponibilidade</th>
+                        <th className="p-2">Imgs</th>
+                        <th className="p-2">Vídeo</th>
+                        <th className="p-2">Checkout</th>
+                        <th className="p-2">Destaque</th>
                         <th className="p-2">Ações</th>
                       </tr>
                     </thead>
@@ -247,6 +328,10 @@ export default function AdminPage() {
                           <td className="p-2">{item.nome}</td>
                           <td className="p-2">{formatBRL(Number(item.preco))}</td>
                           <td className="p-2">{item.disponibilidade}</td>
+                          <td className="p-2">{item.imagens?.length || 0}</td>
+                          <td className="p-2 truncate max-w-[180px]">{item.video_url || "-"}</td>
+                          <td className="p-2 truncate max-w-[180px]">{item.checkout_url || "-"}</td>
+                          <td className="p-2">{item.destaque ? "Sim" : "Não"}</td>
                           <td className="p-2 flex gap-2">
                             <Button size="sm" variant="outline" onClick={() => startEdit(item)}>
                               Editar
