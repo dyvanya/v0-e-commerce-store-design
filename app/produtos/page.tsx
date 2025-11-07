@@ -1,17 +1,33 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { ProductCard } from "@/components/product-card"
 import { Button } from "@/components/ui/button"
-import { productsData } from "@/lib/products-data"
 import { Search } from "lucide-react"
+import { supabase, mapDbToProduct, type ProdutoDb } from "@/lib/supabase"
 
 export default function ProdutosPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [selectedPaymentType, setSelectedPaymentType] = useState<string | null>(null)
+  const [productsData, setProductsData] = useState<any[]>([])
+
+  useEffect(() => {
+    const load = async () => {
+      if (!supabase) {
+        console.warn("Supabase não configurado. Preencha NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY no .env.")
+        return
+      }
+      const { data } = await supabase
+        .from<ProdutoDb>("produtos")
+        .select("*")
+        .order("criado_em", { ascending: false })
+      if (data) setProductsData(data.map(mapDbToProduct))
+    }
+    load()
+  }, [])
 
   const categories = Array.from(new Set(productsData.map((p) => p.category)))
   const paymentTypes = [
@@ -29,7 +45,7 @@ export default function ProdutosPage() {
 
       return matchesSearch && matchesCategory && matchesPayment
     })
-  }, [searchQuery, selectedCategory, selectedPaymentType])
+  }, [productsData, searchQuery, selectedCategory, selectedPaymentType])
 
   return (
     <div className="flex flex-col min-h-screen">

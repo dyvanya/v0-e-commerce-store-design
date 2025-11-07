@@ -8,6 +8,7 @@ import { ShoppingCart, Star } from "lucide-react"
 import type { Product } from "@/lib/types"
 import { useState } from "react"
 import { useCart } from "@/hooks/use-cart"
+import { formatBRL } from "@/lib/utils"
 
 interface ProductCardProps {
   product: Product
@@ -68,7 +69,7 @@ export function ProductCard({ product }: ProductCardProps) {
 
           {/* Preço e Botão */}
           <div className="flex items-center justify-between mt-auto pt-4 border-t border-border">
-            <span className="text-lg font-bold text-primary">R$ {product.price.toFixed(2)}</span>
+            <span className="text-lg font-bold text-primary">{formatBRL(product.price)}</span>
             <Button
               size="sm"
               className={`transition-colors ${added ? "bg-green-600 hover:bg-green-600" : "bg-primary hover:bg-primary/90"}`}

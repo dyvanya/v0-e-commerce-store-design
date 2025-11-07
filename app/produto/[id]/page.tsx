@@ -1,22 +1,44 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { productsData } from "@/lib/products-data"
 import { ProductCard } from "@/components/product-card"
 import { Star, ShoppingCart, Heart, Share2, MessageCircle, Check } from "lucide-react"
 import Link from "next/link"
 import { useCart } from "@/hooks/use-cart"
+import { supabase, mapDbToProduct, type ProdutoDb } from "@/lib/supabase"
+import { formatBRL } from "@/lib/utils"
 
 interface ProductPageProps {
   params: { id: string }
 }
 
 export default function ProductPage({ params }: ProductPageProps) {
-  const product = productsData.find((p) => String(p.id).trim() === String(params.id).trim())
+  const [product, setProduct] = useState<any | null>(null)
+  const [relatedProducts, setRelatedProducts] = useState<any[]>([])
+
+  useEffect(() => {
+    const load = async () => {
+      if (!supabase) {
+        return
+      }
+      const { data, error } = await supabase
+        .from<ProdutoDb>("produtos")
+        .select("*")
+        .eq("id", Number(params.id))
+        .maybeSingle()
+      if (!error && data) {
+        const mapped = mapDbToProduct(data)
+        setProduct(mapped)
+      }
+      const { data: list } = await supabase.from<ProdutoDb>("produtos").select("*").limit(3)
+      if (list) setRelatedProducts(list.map(mapDbToProduct).filter((p) => p.id !== params.id))
+    }
+    load()
+  }, [params.id])
 
   const [quantity, setQuantity] = useState(1)
   const [isWishlisted, setIsWishlisted] = useState(false)
@@ -42,8 +64,6 @@ export default function ProductPage({ params }: ProductPageProps) {
     )
   }
 
-  const relatedProducts = productsData.filter((p) => p.category === product.category && p.id !== product.id).slice(0, 3)
-
   const handleAddToCart = () => {
     addItem(product, quantity)
     setAddedToCart(true)
@@ -52,7 +72,9 @@ export default function ProductPage({ params }: ProductPageProps) {
   }
 
   const handleWhatsAppContact = () => {
-    const whatsappUrl = `https://wa.me/5571991108625?text=Olá!%20Tenho%20interesse%20no%20produto:%20${encodeURIComponent(product.name)}%20(%20R$%20${product.price.toFixed(2)})`
+    const whatsappUrl = `https://wa.me/5571991108625?text=Olá!%20Tenho%20interesse%20no%20produto:%20${encodeURIComponent(
+      product.name
+    )}%20(%20${encodeURIComponent(formatBRL(product.price))})`
     window.open(whatsappUrl, "_blank")
   }
 
@@ -150,7 +172,7 @@ export default function ProductPage({ params }: ProductPageProps) {
 
                 {/* Preço */}
                 <div className="mb-8">
-                  <div className="text-4xl font-bold text-primary mb-2">R$ {product.price.toFixed(2)}</div>
+                  <div className="text-4xl font-bold text-primary mb-2">{formatBRL(product.price)}</div>
                   <p className="text-muted-foreground">
                     Preço em:
                     {product.paymentType === "cod" ? " Pagamento na Entrega" : " Entrega Pessoal"}
