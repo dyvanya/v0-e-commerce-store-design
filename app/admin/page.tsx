@@ -104,6 +104,7 @@ export default function AdminPage() {
           imagens: extraImages.length ? extraImages : null,
           video_url: form.video_url || null,
           checkout_url: form.checkout_url || null,
+          destaque: !!form.destaque,
           disponibilidade: form.disponibilidade,
         })
         if (error) throw error
@@ -119,6 +120,7 @@ export default function AdminPage() {
             imagens: extraImages.length ? extraImages : form.imagensUrls || null,
             video_url: form.video_url || null,
             checkout_url: form.checkout_url || null,
+            destaque: !!form.destaque,
             disponibilidade: form.disponibilidade,
           })
           .eq("id", form.id)
