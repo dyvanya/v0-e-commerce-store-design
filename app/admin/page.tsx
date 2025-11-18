@@ -80,10 +80,12 @@ export default function AdminPage() {
         imageUrl = publicUrl.publicUrl
       }
 
-      // Upload múltiplas imagens adicionais
       let extraImages: string[] = []
       if (form.imagensFiles && form.imagensFiles.length > 0) {
+        const allowed = ["image/jpeg", "image/png"]
+        const maxSize = 5 * 1024 * 1024
         for (const file of form.imagensFiles) {
+          if (!allowed.includes(file.type) || file.size > maxSize) continue
           const path = `${Date.now()}-${file.name}`
           const { error: upErr } = await supabase.storage.from(bucket).upload(path, file, {
             cacheControl: "3600",
@@ -119,7 +121,11 @@ export default function AdminPage() {
             descricao: form.descricao,
             preco: Number(form.preco),
             imagem_url: imageUrl,
-            imagens: extraImages.length ? extraImages : form.imagensUrls || null,
+            imagens: (() => {
+              const prev = form.imagensUrls || []
+              const next = extraImages.length ? [...prev, ...extraImages] : prev
+              return next.length ? next : null
+            })(),
             video_url: form.video_url || null,
             checkout_url: form.checkout_url || null,
             destaque: !!form.destaque,
@@ -262,14 +268,48 @@ export default function AdminPage() {
                   <input
                     type="file"
                     multiple
-                    accept="image/*"
+                    accept="image/png,image/jpeg"
                     className="w-full mt-1"
-                    onChange={(e) => setForm((f) => ({ ...f, imagensFiles: Array.from(e.target.files || []) }))}
+                    onChange={(e) => {
+                      const files = Array.from(e.target.files || [])
+                      const allowed = ["image/jpeg", "image/png"]
+                      const maxSize = 5 * 1024 * 1024
+                      const valid = files.filter((f) => allowed.includes(f.type) && f.size <= maxSize)
+                      setForm((f) => ({ ...f, imagensFiles: valid }))
+                    }}
                   />
                   {form.imagensUrls && form.imagensUrls.length > 0 && (
-                    <div className="mt-2 flex gap-2 flex-wrap">
+                    <div className="mt-2 grid grid-cols-4 sm:grid-cols-6 gap-2">
                       {form.imagensUrls.map((u, i) => (
-                        <img key={i} src={u} alt="" className="h-16 w-16 object-cover rounded border" />
+                        <div key={i} className="relative group">
+                          <img loading="lazy" src={u} alt="imagem" className="h-16 w-16 object-cover rounded border" />
+                          <button
+                            aria-label="Excluir imagem"
+                            className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 border border-border rounded-full p-1"
+                            onClick={async () => {
+                              if (!confirm("Deseja excluir esta imagem?")) return
+                              if (!supabase) return
+                              const pathPrefix = `/storage/v1/object/public/${bucket}/`
+                              const idx = u.indexOf(pathPrefix)
+                              let objPath = ""
+                              if (idx >= 0) objPath = u.substring(idx + pathPrefix.length)
+                              if (objPath) {
+                                await supabase.storage.from(bucket).remove([objPath])
+                              }
+                              const next = (form.imagensUrls || []).filter((x) => x !== u)
+                              setForm((f) => ({ ...f, imagensUrls: next }))
+                              if (form.id) {
+                                await supabase
+                                  .from("produtos")
+                                  .update({ imagens: next.length ? next : null })
+                                  .eq("id", form.id)
+                              }
+                              alert("Imagem removida")
+                            }}
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-4 h-4 text-destructive"><path fill="currentColor" d="M9 3h6l1 2h4v2H4V5h4l1-2zm1 6h2v9h-2V9zm4 0h2v9h-2V9z"/></svg>
+                          </button>
+                        </div>
                       ))}
                     </div>
                   )}
