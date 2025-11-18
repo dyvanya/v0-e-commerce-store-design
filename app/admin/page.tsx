@@ -30,6 +30,12 @@ export default function AdminPage() {
   const [items, setItems] = useState<ProdutoDb[]>([])
   const [colors, setColors] = useState<any[]>([])
   const [sizes, setSizes] = useState<any[]>([])
+  const [newColorName, setNewColorName] = useState("")
+  const [newColorHex, setNewColorHex] = useState("#000000")
+  const [newColorActive, setNewColorActive] = useState(true)
+  const [newSizeDesc, setNewSizeDesc] = useState("")
+  const [newSizeCode, setNewSizeCode] = useState("")
+  const [newSizeActive, setNewSizeActive] = useState(true)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState<FormState>({ nome: "", descricao: "", preco: "", disponibilidade: "", imagensFiles: [], imagensUrls: [], video_url: "", checkout_url: "", payment_type: "cod" })
@@ -292,6 +298,25 @@ export default function AdminPage() {
                         {!c.ativo && <span className="text-[10px] text-muted-foreground">(inativa)</span>}
                       </button>
                     ))}
+                    {colors.length === 0 && (
+                      <span className="text-xs text-muted-foreground">Nenhuma cor cadastrada</span>
+                    )}
+                  </div>
+                  <div className="mt-3 grid grid-cols-1 md:grid-cols-4 gap-2">
+                    <input value={newColorName} onChange={(e)=>setNewColorName(e.target.value)} placeholder="Nome" className="px-3 py-2 border rounded text-sm" />
+                    <input type="color" value={newColorHex} onChange={(e)=>setNewColorHex(e.target.value)} className="px-3 py-2 border rounded" />
+                    <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={newColorActive} onChange={(e)=>setNewColorActive(e.target.checked)} /> Ativa</label>
+                    <Button
+                      type="button"
+                      className="bg-primary"
+                      onClick={async ()=>{
+                        if (!supabase) return
+                        const { data } = await supabase.from("cores").insert({ nome: newColorName || "Cor", hex: newColorHex || "#000000", ativo: newColorActive }).select("*")
+                        const { data: cores } = await supabase.from("cores").select("*").order("nome")
+                        setColors(cores || [])
+                        setNewColorName("")
+                      }}
+                    >Adicionar Cor</Button>
                   </div>
                 </div>
                 <div>
@@ -310,6 +335,26 @@ export default function AdminPage() {
                         {!s.ativo && <span className="text-[10px] text-muted-foreground"> (inativo)</span>}
                       </button>
                     ))}
+                    {sizes.length === 0 && (
+                      <span className="text-xs text-muted-foreground">Nenhum tamanho cadastrado</span>
+                    )}
+                  </div>
+                  <div className="mt-3 grid grid-cols-1 md:grid-cols-4 gap-2">
+                    <input value={newSizeDesc} onChange={(e)=>setNewSizeDesc(e.target.value)} placeholder="Descrição" className="px-3 py-2 border rounded text-sm" />
+                    <input value={newSizeCode} onChange={(e)=>setNewSizeCode(e.target.value)} placeholder="Código" className="px-3 py-2 border rounded text-sm" />
+                    <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={newSizeActive} onChange={(e)=>setNewSizeActive(e.target.checked)} /> Ativo</label>
+                    <Button
+                      type="button"
+                      className="bg-primary"
+                      onClick={async ()=>{
+                        if (!supabase) return
+                        const { data } = await supabase.from("tamanhos").insert({ descricao: newSizeDesc || "Tamanho", codigo: newSizeCode || "U", ativo: newSizeActive }).select("*")
+                        const { data: tamanhos } = await supabase.from("tamanhos").select("*").order("descricao")
+                        setSizes(tamanhos || [])
+                        setNewSizeDesc("")
+                        setNewSizeCode("")
+                      }}
+                    >Adicionar Tamanho</Button>
                   </div>
                 </div>
                 <div>
