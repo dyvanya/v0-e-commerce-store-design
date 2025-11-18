@@ -6,6 +6,7 @@ import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ProductCard } from "@/components/product-card"
+import { ImageSlider } from "@/components/image-slider"
 import { Star, ShoppingCart, Heart, Share2, MessageCircle, Check } from "lucide-react"
 import Link from "next/link"
 import { useCart } from "@/hooks/use-cart"
@@ -124,29 +125,16 @@ export default function ProductPage({ params }: ProductPageProps) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-20">
               {/* Imagem */}
               <div>
-                <div className="bg-muted rounded-lg overflow-hidden mb-4 relative aspect-square">
-                  <img
-                    src={mainImage || product.image || "/placeholder.svg"}
-                    alt={product.name}
-                    className="w-full h-full object-cover"
+                <div className="mb-4 aspect-square">
+                  <ImageSlider
+                    images={[product.image, ...(product.images || [])].filter(Boolean).map((src) => ({ src: src!, alt: product.name }))}
+                    effect="slide"
+                    speedMs={300}
+                    autoplay={false}
                   />
                 </div>
 
-                {product.images && product.images.length > 0 && (
-                  <div className="flex gap-2 flex-wrap">
-                    {[product.image, ...(product.images || [])].filter(Boolean).map((img, idx) => (
-                      <button
-                        key={idx}
-                        className={`h-16 w-16 rounded border ${mainImage === img ? "border-primary" : "border-border"}`}
-                        onClick={() => setMainImage(img!)}
-                      >
-                        <img src={img!} alt="thumb" className="h-full w-full object-cover rounded" />
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                {/* Vídeo */}
+                
                 {product.video && (
                   <div className="mt-4">
                     <Button variant="outline" className="bg-transparent" onClick={() => window.open(product.video!, "_blank")}>Assistir review no YouTube</Button>
@@ -159,7 +147,7 @@ export default function ProductPage({ params }: ProductPageProps) {
                 <div className="mb-6">
                   <div className="flex items-center gap-3 mb-4">
                     <Badge variant={product.paymentType === "cod" ? "default" : "secondary"}>
-                      {product.paymentType === "cod" ? "Pagamento na Entrega" : "Entrega Pessoal"}
+                      {product.paymentType === "cod" ? "Pagamento na Entrega" : product.paymentType === "delivery" ? "Entrega Pessoal" : "Pagamento Antecipado"}
                     </Badge>
                     {product.stock < 5 && product.stock > 0 && <Badge variant="destructive">Últimas unidades</Badge>}
                     {product.stock === 0 && <Badge variant="destructive">Fora de Estoque</Badge>}
@@ -194,8 +182,7 @@ export default function ProductPage({ params }: ProductPageProps) {
                 <div className="mb-8">
                   <div className="text-4xl font-bold text-primary mb-2">{formatBRL(product.price)}</div>
                   <p className="text-muted-foreground">
-                    Preço em:
-                    {product.paymentType === "cod" ? " Pagamento na Entrega" : " Entrega Pessoal"}
+                    Preço em: {product.paymentType === "cod" ? "Pagamento na Entrega" : product.paymentType === "delivery" ? "Entrega Pessoal" : "Pagamento Antecipado"}
                   </p>
                 </div>
 
