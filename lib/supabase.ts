@@ -21,6 +21,7 @@ export interface ProdutoDb {
   disponibilidade?: string | null
   destaque?: boolean | null
   criado_em?: string | null
+  payment_type?: "cod" | "delivery" | "prepaid"
 }
 
 // Mapeia o registro do banco para o tipo Product usado no app
@@ -36,7 +37,7 @@ export function mapDbToProduct(row: ProdutoDb) {
     video: row.video_url || undefined,
     checkoutUrl: row.checkout_url || undefined,
     category: "geral",
-    paymentType: "cod" as const,
+    paymentType: (row.payment_type || "cod") as "cod" | "delivery" | "prepaid",
     stock: estoque,
     rating: 4.7,
     reviews: 18,

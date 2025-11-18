@@ -8,7 +8,7 @@ export interface Product {
   video?: string
   checkoutUrl?: string
   category: string
-  paymentType: "cod" | "delivery" // cod = cash on delivery, delivery = entrega pessoal
+  paymentType: "cod" | "delivery" | "prepaid"
   stock: number
   rating?: number
   reviews?: number

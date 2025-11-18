@@ -20,6 +20,7 @@ type FormState = {
   imagensUrls?: string[]
   video_url?: string
   checkout_url?: string
+  payment_type?: "cod" | "delivery" | "prepaid"
 }
 
 export default function AdminPage() {
@@ -27,7 +28,7 @@ export default function AdminPage() {
   const [items, setItems] = useState<ProdutoDb[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [form, setForm] = useState<FormState>({ nome: "", descricao: "", preco: "", disponibilidade: "", imagensFiles: [], imagensUrls: [], video_url: "", checkout_url: "" })
+  const [form, setForm] = useState<FormState>({ nome: "", descricao: "", preco: "", disponibilidade: "", imagensFiles: [], imagensUrls: [], video_url: "", checkout_url: "", payment_type: "cod" })
   const bucket = process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET || "produtos"
 
   useEffect(() => {
@@ -51,7 +52,7 @@ export default function AdminPage() {
     })()
   }, [router])
 
-  const resetForm = () => setForm({ nome: "", descricao: "", preco: "", disponibilidade: "", imagemFile: null, imagensFiles: [], imagensUrls: [], video_url: "", checkout_url: "" })
+  const resetForm = () => setForm({ nome: "", descricao: "", preco: "", disponibilidade: "", imagemFile: null, imagensFiles: [], imagensUrls: [], video_url: "", checkout_url: "", payment_type: "cod" })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -106,6 +107,7 @@ export default function AdminPage() {
           checkout_url: form.checkout_url || null,
           destaque: !!form.destaque,
           disponibilidade: form.disponibilidade,
+          payment_type: form.payment_type || "cod",
         })
         if (error) throw error
         alert("Produto adicionado com sucesso!")
@@ -122,6 +124,7 @@ export default function AdminPage() {
             checkout_url: form.checkout_url || null,
             destaque: !!form.destaque,
             disponibilidade: form.disponibilidade,
+            payment_type: form.payment_type || "cod",
           })
           .eq("id", form.id)
         if (error) throw error
@@ -167,6 +170,7 @@ export default function AdminPage() {
       video_url: item.video_url || "",
       checkout_url: item.checkout_url || "",
       destaque: Boolean(item.destaque),
+      payment_type: item.payment_type || "cod",
     })
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
@@ -228,6 +232,18 @@ export default function AdminPage() {
                       required
                     />
                   </div>
+                </div>
+                <div>
+                  <label className="text-sm">Pagamento/Entrega</label>
+                  <select
+                    className="w-full mt-1 px-3 py-2 border border-border rounded text-sm"
+                    value={form.payment_type || "cod"}
+                    onChange={(e) => setForm((f) => ({ ...f, payment_type: e.target.value as any }))}
+                  >
+                    <option value="cod">Pagamento na Entrega</option>
+                    <option value="delivery">Entrega Pessoal</option>
+                    <option value="prepaid">Pagamento Antecipado</option>
+                  </select>
                 </div>
                 <div>
                   <label className="text-sm">Imagem principal</label>
@@ -317,6 +333,7 @@ export default function AdminPage() {
                         <th className="p-2">Imgs</th>
                         <th className="p-2">Vídeo</th>
                         <th className="p-2">Checkout</th>
+                        <th className="p-2">Pagamento/Entrega</th>
                         <th className="p-2">Destaque</th>
                         <th className="p-2">Ações</th>
                       </tr>
@@ -333,6 +350,13 @@ export default function AdminPage() {
                           <td className="p-2">{item.imagens?.length || 0}</td>
                           <td className="p-2 truncate max-w-[180px]">{item.video_url || "-"}</td>
                           <td className="p-2 truncate max-w-[180px]">{item.checkout_url || "-"}</td>
+                          <td className="p-2">
+                            {(item.payment_type === "cod"
+                              ? "Pagamento na Entrega"
+                              : item.payment_type === "delivery"
+                              ? "Entrega Pessoal"
+                              : "Pagamento Antecipado")}
+                          </td>
                           <td className="p-2">{item.destaque ? "Sim" : "Não"}</td>
                           <td className="p-2 flex gap-2">
                             <Button size="sm" variant="outline" onClick={() => startEdit(item)}>

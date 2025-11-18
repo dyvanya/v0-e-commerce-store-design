@@ -33,6 +33,7 @@ export default function ProdutosPage() {
   const paymentTypes = [
     { value: "cod", label: "Pagamento na Entrega" },
     { value: "delivery", label: "Entrega Pessoal" },
+    { value: "prepaid", label: "Pagamento Antecipado" },
   ]
 
   const filteredProducts = useMemo(() => {
@@ -110,9 +111,9 @@ export default function ProdutosPage() {
                     </div>
                   </div>
 
-                  {/* Tipo de Pagamento */}
+                  {/* Pagamento/Entrega */}
                   <div className="mb-6">
-                    <label className="text-sm font-medium text-foreground mb-3 block">Tipo de Entrega</label>
+                    <label className="text-sm font-medium text-foreground mb-3 block">Pagamento/Entrega</label>
                     <div className="space-y-2">
                       <Button
                         variant={selectedPaymentType === null ? "default" : "outline"}

@@ -37,8 +37,15 @@ export function ProductCard({ product }: ProductCardProps) {
           />
           {/* Badge de Tipo de Pagamento */}
           <div className="absolute top-3 right-3">
-            <Badge variant={product.paymentType === "cod" ? "default" : "secondary"} className="text-xs">
-              {product.paymentType === "cod" ? "Na Entrega" : "Entrega Pessoal"}
+            <Badge
+              variant={product.paymentType === "cod" ? "default" : "secondary"}
+              className="text-xs"
+            >
+              {product.paymentType === "cod"
+                ? "Na Entrega"
+                : product.paymentType === "delivery"
+                ? "Entrega Pessoal"
+                : "Pagamento Antecipado"}
             </Badge>
           </div>
         </div>

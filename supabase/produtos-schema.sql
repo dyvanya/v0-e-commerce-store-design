@@ -10,6 +10,14 @@ alter table public.produtos add column if not exists destaque boolean default fa
 -- Garantir valores default em linhas existentes
 update public.produtos set destaque = false where destaque is null;
 
+do $$ begin
+  create type public.payment_type as enum ('cod','delivery','prepaid');
+exception when duplicate_object then null; end $$;
+
+alter table public.produtos add column if not exists payment_type public.payment_type default 'cod';
+update public.produtos set payment_type = 'cod' where payment_type is null;
+alter table public.produtos alter column payment_type set not null;
+
 -- 2) (Opcional) Habilitar RLS na tabela. Se usa anon para escrever, mantenha as policies abaixo.
 alter table public.produtos enable row level security;
 
