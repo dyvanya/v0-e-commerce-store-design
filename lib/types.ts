@@ -13,6 +13,8 @@ export interface Product {
   rating?: number
   reviews?: number
   featured?: boolean
+  colors?: { id: number; name: string; hex: string }[]
+  sizes?: { id: number; code: string; description: string }[]
 }
 
 export interface CartItem {

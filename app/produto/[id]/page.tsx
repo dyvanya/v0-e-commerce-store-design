@@ -23,6 +23,10 @@ export default function ProductPage({ params }: ProductPageProps) {
   const [relatedProducts, setRelatedProducts] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [mainImage, setMainImage] = useState<string | null>(null)
+  const [availableColors, setAvailableColors] = useState<any[]>([])
+  const [availableSizes, setAvailableSizes] = useState<any[]>([])
+  const [selectedColor, setSelectedColor] = useState<number | null>(null)
+  const [selectedSize, setSelectedSize] = useState<number | null>(null)
 
   useEffect(() => {
     const load = async () => {
@@ -39,6 +43,14 @@ export default function ProductPage({ params }: ProductPageProps) {
         const mapped = mapDbToProduct(data)
         setProduct(mapped)
         setMainImage(mapped.image)
+        const { data: pc } = await supabase.from("produto_cores").select("cor_id").eq("produto_id", Number(id))
+        const { data: pt } = await supabase.from("produto_tamanhos").select("tamanho_id").eq("produto_id", Number(id))
+        const colorIds = (pc || []).map((r: any) => r.cor_id)
+        const sizeIds = (pt || []).map((r: any) => r.tamanho_id)
+        const { data: cores } = await supabase.from("cores").select("id,nome,hex,ativo").in("id", colorIds)
+        const { data: tamanhos } = await supabase.from("tamanhos").select("id,descricao,codigo,ativo").in("id", sizeIds)
+        setAvailableColors((cores || []).filter((c: any) => c.ativo))
+        setAvailableSizes((tamanhos || []).filter((t: any) => t.ativo))
       }
       const { data: list } = await supabase.from<ProdutoDb>("produtos").select("*").limit(3)
       if (list) setRelatedProducts(list.map(mapDbToProduct).filter((p) => p.id !== id))
@@ -93,7 +105,9 @@ export default function ProductPage({ params }: ProductPageProps) {
   const handleWhatsAppContact = () => {
     const whatsappUrl = `https://wa.me/5571991108625?text=Olá!%20Tenho%20interesse%20no%20produto:%20${encodeURIComponent(
       product.name
-    )}%20(%20${encodeURIComponent(formatBRL(product.price))})`
+    )}%20(%20${encodeURIComponent(formatBRL(product.price))})%0A` +
+    `Cor: ${encodeURIComponent(availableColors.find((c:any)=>c.id===selectedColor)?.nome || "-" )}%0A` +
+    `Tamanho: ${encodeURIComponent(availableSizes.find((s:any)=>s.id===selectedSize)?.codigo || "-" )}`
     window.open(whatsappUrl, "_blank")
   }
 
@@ -138,6 +152,41 @@ export default function ProductPage({ params }: ProductPageProps) {
                 {product.video && (
                   <div className="mt-4">
                     <Button variant="outline" className="bg-transparent" onClick={() => window.open(product.video!, "_blank")}>Assistir review no YouTube</Button>
+                  </div>
+                )}
+                {availableColors.length > 0 && (
+                  <div className="mt-4">
+                    <label className="text-sm font-medium">Cor</label>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {availableColors.map((c) => (
+                        <button
+                          key={c.id}
+                          className={`px-2 py-1 border rounded text-xs flex items-center gap-2 ${selectedColor===c.id?"border-primary":"border-border"}`}
+                          onClick={() => setSelectedColor(c.id)}
+                          title={c.nome}
+                        >
+                          <span className="inline-block h-3 w-3 rounded" style={{ backgroundColor: c.hex }} />
+                          {c.nome}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {availableSizes.length > 0 && (
+                  <div className="mt-4">
+                    <label className="text-sm font-medium">Tamanho</label>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {availableSizes.map((s) => (
+                        <button
+                          key={s.id}
+                          className={`px-2 py-1 border rounded text-xs ${selectedSize===s.id?"border-primary":"border-border"}`}
+                          onClick={() => setSelectedSize(s.id)}
+                          title={s.descricao}
+                        >
+                          {s.codigo}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>

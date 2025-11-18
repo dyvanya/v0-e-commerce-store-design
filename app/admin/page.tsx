@@ -21,11 +21,15 @@ type FormState = {
   video_url?: string
   checkout_url?: string
   payment_type?: "cod" | "delivery" | "prepaid"
+  selectedColors?: number[]
+  selectedSizes?: number[]
 }
 
 export default function AdminPage() {
   const router = useRouter()
   const [items, setItems] = useState<ProdutoDb[]>([])
+  const [colors, setColors] = useState<any[]>([])
+  const [sizes, setSizes] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState<FormState>({ nome: "", descricao: "", preco: "", disponibilidade: "", imagensFiles: [], imagensUrls: [], video_url: "", checkout_url: "", payment_type: "cod" })
@@ -49,11 +53,15 @@ export default function AdminPage() {
         .select("*")
         .order("criado_em", { ascending: false })
       setItems(data || [])
+      const { data: cores } = await supabase.from("cores").select("*").order("nome")
+      setColors(cores || [])
+      const { data: tamanhos } = await supabase.from("tamanhos").select("*").order("descricao")
+      setSizes(tamanhos || [])
       setLoading(false)
     })()
   }, [router])
 
-  const resetForm = () => setForm({ nome: "", descricao: "", preco: "", disponibilidade: "", imagemFile: null, imagensFiles: [], imagensUrls: [], video_url: "", checkout_url: "", payment_type: "cod" })
+  const resetForm = () => setForm({ nome: "", descricao: "", preco: "", disponibilidade: "", imagemFile: null, imagensFiles: [], imagensUrls: [], video_url: "", checkout_url: "", payment_type: "cod", selectedColors: [], selectedSizes: [] })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -106,7 +114,7 @@ export default function AdminPage() {
       })()
 
       if (!form.id) {
-        const { error } = await supabase.from("produtos").insert({
+        const { data: inserted, error } = await supabase.from("produtos").insert({
           nome: form.nome,
           descricao: form.descricao,
           preco: Number(form.preco),
@@ -117,8 +125,15 @@ export default function AdminPage() {
           destaque: !!form.destaque,
           disponibilidade: form.disponibilidade,
           payment_type: form.payment_type || "cod",
-        })
+        }).select("id").limit(1)
         if (error) throw error
+        const newId = inserted?.[0]?.id
+        if (newId) {
+          const corRows = (form.selectedColors || []).map((cid) => ({ produto_id: newId, cor_id: cid }))
+          if (corRows.length) await supabase.from("produto_cores").insert(corRows)
+          const tamRows = (form.selectedSizes || []).map((sid) => ({ produto_id: newId, tamanho_id: sid }))
+          if (tamRows.length) await supabase.from("produto_tamanhos").insert(tamRows)
+        }
         alert("Produto adicionado com sucesso!")
       } else {
         const { error } = await supabase
@@ -141,6 +156,12 @@ export default function AdminPage() {
           })
           .eq("id", form.id)
         if (error) throw error
+        await supabase.from("produto_cores").delete().eq("produto_id", form.id)
+        const corRows = (form.selectedColors || []).map((cid) => ({ produto_id: form.id!, cor_id: cid }))
+        if (corRows.length) await supabase.from("produto_cores").insert(corRows)
+        await supabase.from("produto_tamanhos").delete().eq("produto_id", form.id)
+        const tamRows = (form.selectedSizes || []).map((sid) => ({ produto_id: form.id!, tamanho_id: sid }))
+        if (tamRows.length) await supabase.from("produto_tamanhos").insert(tamRows)
         alert("Produto atualizado com sucesso!")
       }
 
@@ -184,7 +205,15 @@ export default function AdminPage() {
       checkout_url: item.checkout_url || "",
       destaque: Boolean(item.destaque),
       payment_type: item.payment_type || "cod",
+      selectedColors: [],
+      selectedSizes: [],
     })
+    ;(async () => {
+      if (!supabase) return
+      const { data: pc } = await supabase.from("produto_cores").select("cor_id").eq("produto_id", item.id)
+      const { data: pt } = await supabase.from("produto_tamanhos").select("tamanho_id").eq("produto_id", item.id)
+      setForm((f) => ({ ...f, selectedColors: (pc || []).map((r: any) => r.cor_id), selectedSizes: (pt || []).map((r: any) => r.tamanho_id) }))
+    })()
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
@@ -244,6 +273,43 @@ export default function AdminPage() {
                       onChange={(e) => setForm((f) => ({ ...f, disponibilidade: e.target.value }))}
                       required
                     />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm">Cores disponíveis</label>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {colors.map((c) => (
+                      <button
+                        key={c.id}
+                        type="button"
+                        className={`px-2 py-1 border rounded text-xs flex items-center gap-2 ${form.selectedColors?.includes(c.id) ? "border-primary" : "border-border"}`}
+                        onClick={() => setForm((f) => ({ ...f, selectedColors: (f.selectedColors || []).includes(c.id) ? (f.selectedColors || []).filter((x) => x !== c.id) : [ ...(f.selectedColors || []), c.id ] }))}
+                        disabled={!c.ativo}
+                        title={c.nome}
+                      >
+                        <span className="inline-block h-3 w-3 rounded" style={{ backgroundColor: c.hex }} />
+                        {c.nome}
+                        {!c.ativo && <span className="text-[10px] text-muted-foreground">(inativa)</span>}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm">Tamanhos disponíveis</label>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {sizes.map((s) => (
+                      <button
+                        key={s.id}
+                        type="button"
+                        className={`px-2 py-1 border rounded text-xs ${form.selectedSizes?.includes(s.id) ? "border-primary" : "border-border"}`}
+                        onClick={() => setForm((f) => ({ ...f, selectedSizes: (f.selectedSizes || []).includes(s.id) ? (f.selectedSizes || []).filter((x) => x !== s.id) : [ ...(f.selectedSizes || []), s.id ] }))}
+                        disabled={!s.ativo}
+                        title={s.descricao}
+                      >
+                        {s.codigo} - {s.descricao}
+                        {!s.ativo && <span className="text-[10px] text-muted-foreground"> (inativo)</span>}
+                      </button>
+                    ))}
                   </div>
                 </div>
                 <div>
@@ -466,6 +532,91 @@ export default function AdminPage() {
                   </table>
                 </div>
               )}
+            </div>
+            {/* Gestão de atributos */}
+            <div className="lg:col-span-3 grid gap-8">
+              <div className="bg-white border border-border rounded-lg p-6">
+                <h2 className="text-xl font-semibold mb-4">Cores</h2>
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault()
+                    const formEl = e.target as HTMLFormElement
+                    const nome = (formEl.elements.namedItem("cor_nome") as HTMLInputElement).value
+                    const hex = (formEl.elements.namedItem("cor_hex") as HTMLInputElement).value
+                    const ativo = (formEl.elements.namedItem("cor_ativo") as HTMLInputElement).checked
+                    if (!supabase) return
+                    await supabase.from("cores").insert({ nome, hex, ativo })
+                    const { data: cores } = await supabase.from("cores").select("*").order("nome")
+                    setColors(cores || [])
+                    formEl.reset()
+                  }}
+                  className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4"
+                >
+                  <input name="cor_nome" placeholder="Nome" className="px-3 py-2 border rounded" required />
+                  <input name="cor_hex" type="color" className="px-3 py-2 border rounded" defaultValue="#000000" />
+                  <label className="flex items-center gap-2 text-sm"><input name="cor_ativo" type="checkbox" defaultChecked /> Ativa</label>
+                  <Button type="submit" className="bg-primary">Adicionar Cor</Button>
+                </form>
+                <div className="flex flex-wrap gap-2">
+                  {colors.map((c) => (
+                    <div key={c.id} className="flex items-center gap-2 border rounded px-2 py-1 text-xs">
+                      <span className="inline-block h-3 w-3 rounded" style={{ backgroundColor: c.hex }} />
+                      {c.nome}
+                      <button
+                        className="ml-2 text-muted-foreground underline"
+                        onClick={async () => {
+                          await supabase.from("cores").update({ ativo: !c.ativo }).eq("id", c.id)
+                          const { data: cores } = await supabase.from("cores").select("*").order("nome")
+                          setColors(cores || [])
+                        }}
+                      >
+                        {c.ativo ? "Desativar" : "Ativar"}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="bg-white border border-border rounded-lg p-6">
+                <h2 className="text-xl font-semibold mb-4">Tamanhos</h2>
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault()
+                    const formEl = e.target as HTMLFormElement
+                    const codigo = (formEl.elements.namedItem("tam_codigo") as HTMLInputElement).value
+                    const descricao = (formEl.elements.namedItem("tam_desc") as HTMLInputElement).value
+                    const ativo = (formEl.elements.namedItem("tam_ativo") as HTMLInputElement).checked
+                    if (!supabase) return
+                    await supabase.from("tamanhos").insert({ codigo, descricao, ativo })
+                    const { data: tamanhos } = await supabase.from("tamanhos").select("*").order("descricao")
+                    setSizes(tamanhos || [])
+                    formEl.reset()
+                  }}
+                  className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4"
+                >
+                  <input name="tam_desc" placeholder="Descrição" className="px-3 py-2 border rounded" required />
+                  <input name="tam_codigo" placeholder="Código" className="px-3 py-2 border rounded" required />
+                  <label className="flex items-center gap-2 text-sm"><input name="tam_ativo" type="checkbox" defaultChecked /> Ativo</label>
+                  <Button type="submit" className="bg-primary">Adicionar Tamanho</Button>
+                </form>
+                <div className="flex flex-wrap gap-2">
+                  {sizes.map((s) => (
+                    <div key={s.id} className="flex items-center gap-2 border rounded px-2 py-1 text-xs">
+                      {s.codigo} - {s.descricao}
+                      <button
+                        className="ml-2 text-muted-foreground underline"
+                        onClick={async () => {
+                          await supabase.from("tamanhos").update({ ativo: !s.ativo }).eq("id", s.id)
+                          const { data: tamanhos } = await supabase.from("tamanhos").select("*").order("descricao")
+                          setSizes(tamanhos || [])
+                        }}
+                      >
+                        {s.ativo ? "Desativar" : "Ativar"}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </section>
