@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
@@ -30,6 +30,7 @@ export default function AdminPage() {
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState<FormState>({ nome: "", descricao: "", preco: "", disponibilidade: "", imagensFiles: [], imagensUrls: [], video_url: "", checkout_url: "", payment_type: "cod" })
   const bucket = process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET || "produtos"
+  const addInputRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
     const ok = typeof window !== "undefined" && localStorage.getItem("admin_auth") === "true"
@@ -98,13 +99,19 @@ export default function AdminPage() {
         }
       }
 
+      const nextImagesForInsert = (() => {
+        const prev = form.imagensUrls || []
+        const next = extraImages.length ? [...prev, ...extraImages] : prev
+        return next.length ? next : null
+      })()
+
       if (!form.id) {
         const { error } = await supabase.from("produtos").insert({
           nome: form.nome,
           descricao: form.descricao,
           preco: Number(form.preco),
           imagem_url: imageUrl,
-          imagens: extraImages.length ? extraImages : null,
+          imagens: nextImagesForInsert,
           video_url: form.video_url || null,
           checkout_url: form.checkout_url || null,
           destaque: !!form.destaque,
@@ -266,16 +273,45 @@ export default function AdminPage() {
                 <div>
                   <label className="text-sm">Imagens adicionais</label>
                   <input
+                    ref={addInputRef}
                     type="file"
                     multiple
                     accept="image/png,image/jpeg"
-                    className="w-full mt-1"
-                    onChange={(e) => {
+                    className="hidden"
+                    onChange={async (e) => {
                       const files = Array.from(e.target.files || [])
+                      if (!files.length) return
                       const allowed = ["image/jpeg", "image/png"]
                       const maxSize = 5 * 1024 * 1024
                       const valid = files.filter((f) => allowed.includes(f.type) && f.size <= maxSize)
-                      setForm((f) => ({ ...f, imagensFiles: valid }))
+                      if (!supabase) {
+                        setForm((f) => ({ ...f, imagensFiles: valid }))
+                        return
+                      }
+                      const uploaded: string[] = []
+                      for (const file of valid) {
+                        const path = `${Date.now()}-${file.name}`
+                        const { error: upErr } = await supabase.storage.from(bucket).upload(path, file, {
+                          cacheControl: "3600",
+                          upsert: true,
+                          contentType: file.type || "application/octet-stream",
+                        })
+                        if (upErr) continue
+                        const { data: publicUrl } = supabase.storage.from(bucket).getPublicUrl(path)
+                        uploaded.push(publicUrl.publicUrl)
+                      }
+                      if (uploaded.length) {
+                        const next = [ ...(form.imagensUrls || []), ...uploaded ]
+                        setForm((f) => ({ ...f, imagensUrls: next }))
+                        if (form.id) {
+                          await supabase
+                            .from("produtos")
+                            .update({ imagens: next })
+                            .eq("id", form.id)
+                        }
+                        alert("Imagens adicionadas")
+                      }
+                      if (addInputRef.current) addInputRef.current.value = ""
                     }}
                   />
                   {form.imagensUrls && form.imagensUrls.length > 0 && (
@@ -285,7 +321,7 @@ export default function AdminPage() {
                           <img loading="lazy" src={u} alt="imagem" className="h-16 w-16 object-cover rounded border" />
                           <button
                             aria-label="Excluir imagem"
-                            className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 border border-border rounded-full p-1"
+                            className="absolute top-1 right-1 z-10 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 border border-border rounded-full p-1"
                             onClick={async () => {
                               if (!confirm("Deseja excluir esta imagem?")) return
                               if (!supabase) return
@@ -311,8 +347,26 @@ export default function AdminPage() {
                           </button>
                         </div>
                       ))}
+                      <button
+                        type="button"
+                        className="h-16 w-16 border border-dashed border-border rounded flex items-center justify-center hover:border-primary"
+                        onClick={() => addInputRef.current?.click()}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-5 h-5 text-muted-foreground"><path fill="currentColor" d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2z"/></svg>
+                      </button>
                     </div>
                   )}
+                  {!form.imagensUrls || form.imagensUrls.length === 0 ? (
+                    <div className="mt-2">
+                      <button
+                        type="button"
+                        className="px-3 py-2 border border-dashed border-border rounded text-sm hover:border-primary"
+                        onClick={() => addInputRef.current?.click()}
+                      >
+                        Adicionar imagens
+                      </button>
+                    </div>
+                  ) : null}
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
