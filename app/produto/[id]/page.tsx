@@ -47,8 +47,25 @@ export default function ProductPage({ params }: ProductPageProps) {
         const { data: pt } = await supabase.from("produto_tamanhos").select("tamanho_id").eq("produto_id", Number(id))
         const colorIds = (pc || []).map((r: any) => r.cor_id)
         const sizeIds = (pt || []).map((r: any) => r.tamanho_id)
-        const { data: cores } = await supabase.from("cores").select("id,nome,hex,ativo").in("id", colorIds)
-        const { data: tamanhos } = await supabase.from("tamanhos").select("id,descricao,codigo,ativo").in("id", sizeIds)
+
+        let cores: any[] | null = null
+        if (colorIds.length > 0) {
+          const { data } = await supabase.from("cores").select("id,nome,hex,ativo").in("id", colorIds)
+          cores = data || []
+        } else {
+          const { data } = await supabase.from("cores").select("id,nome,hex,ativo").eq("ativo", true).order("nome")
+          cores = data || []
+        }
+
+        let tamanhos: any[] | null = null
+        if (sizeIds.length > 0) {
+          const { data } = await supabase.from("tamanhos").select("id,descricao,codigo,ativo").in("id", sizeIds)
+          tamanhos = data || []
+        } else {
+          const { data } = await supabase.from("tamanhos").select("id,descricao,codigo,ativo").eq("ativo", true).order("descricao")
+          tamanhos = data || []
+        }
+
         setAvailableColors((cores || []).filter((c: any) => c.ativo))
         setAvailableSizes((tamanhos || []).filter((t: any) => t.ativo))
       }
