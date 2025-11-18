@@ -36,6 +36,14 @@ export default function AdminPage() {
   const [newSizeDesc, setNewSizeDesc] = useState("")
   const [newSizeCode, setNewSizeCode] = useState("")
   const [newSizeActive, setNewSizeActive] = useState(true)
+  const [bannerSets, setBannerSets] = useState<any[]>([])
+  const [selectedSet, setSelectedSet] = useState<any | null>(null)
+  const [setImages, setSetImages] = useState<any[]>([])
+  const [setName, setSetName] = useState("")
+  const [setTransition, setSetTransition] = useState(4000)
+  const [setEffect, setSetEffect] = useState("slide")
+  const [setEnabled, setSetEnabled] = useState(true)
+  const [setActivateAt, setSetActivateAt] = useState<string>("")
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState<FormState>({ nome: "", descricao: "", preco: "", disponibilidade: "", imagensFiles: [], imagensUrls: [], video_url: "", checkout_url: "", payment_type: "cod" })
@@ -63,6 +71,8 @@ export default function AdminPage() {
       setColors(cores || [])
       const { data: tamanhos } = await supabase.from("tamanhos").select("*").order("descricao")
       setSizes(tamanhos || [])
+      const { data: sets } = await supabase.from("banner_sets").select("*").order("created_at", { ascending: false })
+      setBannerSets(sets || [])
       setLoading(false)
     })()
   }, [router])
@@ -660,6 +670,153 @@ export default function AdminPage() {
                       </button>
                     </div>
                   ))}
+                </div>
+              </div>
+              <div className="bg-white border border-border rounded-lg p-6">
+                <h2 className="text-xl font-semibold mb-4">Banner da Home</h2>
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-4">
+                  <input value={setName} onChange={(e)=>setSetName(e.target.value)} placeholder="Nome do conjunto" className="px-3 py-2 border rounded md:col-span-2" />
+                  <select value={setEffect} onChange={(e)=>setSetEffect(e.target.value)} className="px-3 py-2 border rounded">
+                    <option value="slide">Slide</option>
+                    <option value="fade">Fade</option>
+                    <option value="zoom">Zoom</option>
+                  </select>
+                  <input type="number" value={setTransition} onChange={(e)=>setSetTransition(parseInt(e.target.value||"0")||0)} className="px-3 py-2 border rounded" placeholder="Transição (ms)" />
+                  <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={setEnabled} onChange={(e)=>setSetEnabled(e.target.checked)} /> Slider ativo</label>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+                  <input type="datetime-local" value={setActivateAt} onChange={(e)=>setSetActivateAt(e.target.value)} className="px-3 py-2 border rounded" />
+                  <Button
+                    className="bg-primary"
+                    onClick={async ()=>{
+                      if (!supabase) return
+                      const { data } = await supabase.from("banner_sets").insert({ name: setName || "Conjunto", effect: setEffect, transition_ms: setTransition || 4000, slider_enabled: setEnabled, active: false, active_at: setActivateAt ? new Date(setActivateAt).toISOString() : null }).select("*")
+                      const { data: sets } = await supabase.from("banner_sets").select("*").order("created_at", { ascending: false })
+                      setBannerSets(sets || [])
+                      setSelectedSet(data?.[0] || null)
+                      setSetImages([])
+                      setName("")
+                      setSetActivateAt("")
+                    }}
+                  >Criar conjunto</Button>
+                  <select className="px-3 py-2 border rounded" value={selectedSet?.id || ""} onChange={(e)=>{
+                    const id = Number(e.target.value)
+                    const sel = (bannerSets || []).find((s)=>s.id===id) || null
+                    setSelectedSet(sel)
+                    ;(async ()=>{
+                      if (!supabase || !id) return
+                      const { data: imgs } = await supabase.from("banner_images").select("*").eq("set_id", id).order("position")
+                      setSetImages(imgs || [])
+                    })()
+                  }}>
+                    <option value="">Selecionar conjunto existente</option>
+                    {bannerSets.map((s)=> (
+                      <option key={s.id} value={s.id}>{s.name} {s.active?"(ativo)":""}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+                  <Button
+                    variant="outline"
+                    onClick={async ()=>{
+                      if (!supabase || !selectedSet?.id) return
+                      await supabase.from("banner_sets").update({ active: true, active_at: selectedSet.active_at || new Date().toISOString() }).eq("id", selectedSet.id)
+                      await supabase.from("banner_sets").update({ active: false }).neq("id", selectedSet.id)
+                      const { data: sets } = await supabase.from("banner_sets").select("*").order("created_at", { ascending: false })
+                      setBannerSets(sets || [])
+                    }}
+                  >Publicar conjunto</Button>
+                  <Button
+                    variant="outline"
+                    onClick={async ()=>{
+                      if (!supabase || !selectedSet?.id) return
+                      await supabase.from("banner_sets").update({ slider_enabled: !selectedSet.slider_enabled }).eq("id", selectedSet.id)
+                      const { data: sets } = await supabase.from("banner_sets").select("*").order("created_at", { ascending: false })
+                      setBannerSets(sets || [])
+                      const sel = (sets||[]).find((s:any)=>s.id===selectedSet.id) || null
+                      setSelectedSet(sel)
+                    }}
+                  >Ativar/Desativar slider</Button>
+                  <Button
+                    variant="outline"
+                    onClick={async ()=>{
+                      if (!supabase || !selectedSet?.id) return
+                      await supabase.from("banner_sets").update({ transition_ms: setTransition, effect: setEffect }).eq("id", selectedSet.id)
+                      const { data: sets } = await supabase.from("banner_sets").select("*").order("created_at", { ascending: false })
+                      setBannerSets(sets || [])
+                    }}
+                  >Salvar config</Button>
+                </div>
+
+                <div className="border rounded p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm">Imagens do slider</span>
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      multiple
+                      onChange={async (e)=>{
+                        const files = Array.from(e.target.files || [])
+                        if (!files.length || !supabase || !selectedSet?.id) return
+                        const allowed = ["image/jpeg","image/png","image/webp"]
+                        const maxSize = 5*1024*1024
+                        let pos = (setImages[setImages.length-1]?.position || 0)
+                        const uploaded: any[] = []
+                        for (const file of files) {
+                          if (!allowed.includes(file.type) || file.size>maxSize) continue
+                          const path = `${Date.now()}-${file.name}`
+                          const { error } = await supabase.storage.from("banners").upload(path, file, { upsert: true, cacheControl: "3600", contentType: file.type })
+                          if (error) continue
+                          const { data: url } = supabase.storage.from("banners").getPublicUrl(path)
+                          pos += 1
+                          uploaded.push({ set_id: selectedSet.id, url: url.publicUrl, position: pos, format: file.type })
+                        }
+                        if (uploaded.length) {
+                          await supabase.from("banner_images").insert(uploaded)
+                          const { data: imgs } = await supabase.from("banner_images").select("*").eq("set_id", selectedSet.id).order("position")
+                          setSetImages(imgs || [])
+                          alert("Imagens adicionadas")
+                        }
+                        e.currentTarget.value = ""
+                      }}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {setImages.map((img, i)=> (
+                      <div key={img.id} className="relative group">
+                        <img src={img.url} alt="banner" className="h-24 w-full object-cover rounded border" />
+                        <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100">
+                          <button className="bg-white border rounded p-1" onClick={async ()=>{
+                            if (i===0) return
+                            const prev = setImages[i-1]
+                            await supabase.from("banner_images").update({ position: prev.position }).eq("id", img.id)
+                            await supabase.from("banner_images").update({ position: img.position }).eq("id", prev.id)
+                            const { data: imgs } = await supabase.from("banner_images").select("*").eq("set_id", selectedSet.id).order("position")
+                            setSetImages(imgs || [])
+                          }}>↑</button>
+                          <button className="bg-white border rounded p-1" onClick={async ()=>{
+                            if (i===setImages.length-1) return
+                            const next = setImages[i+1]
+                            await supabase.from("banner_images").update({ position: next.position }).eq("id", img.id)
+                            await supabase.from("banner_images").update({ position: img.position }).eq("id", next.id)
+                            const { data: imgs } = await supabase.from("banner_images").select("*").eq("set_id", selectedSet.id).order("position")
+                            setSetImages(imgs || [])
+                          }}>↓</button>
+                          <button className="bg-white border rounded p-1" onClick={async ()=>{
+                            if (!confirm("Excluir imagem do slider?")) return
+                            const prefix = "/storage/v1/object/public/banners/"
+                            const idx = img.url.indexOf(prefix)
+                            const objPath = idx>=0 ? img.url.substring(idx+prefix.length) : ""
+                            if (objPath) await supabase.storage.from("banners").remove([objPath])
+                            await supabase.from("banner_images").delete().eq("id", img.id)
+                            const { data: imgs } = await supabase.from("banner_images").select("*").eq("set_id", selectedSet.id).order("position")
+                            setSetImages(imgs || [])
+                          }}>✕</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>

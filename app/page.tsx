@@ -8,9 +8,12 @@ import Link from "next/link"
 import { ArrowRight, Package, Truck, Heart } from "lucide-react"
 import { useEffect, useState } from "react"
 import { supabase, mapDbToProduct, type ProdutoDb } from "@/lib/supabase"
+import { ImageSlider } from "@/components/image-slider"
 
 export default function Home() {
   const [featuredProducts, setFeaturedProducts] = useState<any[]>([])
+  const [bannerConfig, setBannerConfig] = useState<any | null>(null)
+  const [bannerImages, setBannerImages] = useState<any[]>([])
 
   useEffect(() => {
     const load = async () => {
@@ -22,6 +25,23 @@ export default function Home() {
         .order("criado_em", { ascending: false })
         .limit(6)
       if (data) setFeaturedProducts(data.map(mapDbToProduct))
+
+      const { data: sets } = await supabase
+        .from("banner_sets")
+        .select("*")
+        .order("active", { ascending: false })
+        .order("active_at", { ascending: false })
+        .limit(1)
+      const activeSet = sets?.[0]
+      if (activeSet) {
+        setBannerConfig(activeSet)
+        const { data: imgs } = await supabase
+          .from("banner_images")
+          .select("*")
+          .eq("set_id", activeSet.id)
+          .order("position")
+        setBannerImages(imgs || [])
+      }
     }
     load()
   }, [])
@@ -49,9 +69,18 @@ export default function Home() {
               </Link>
             </div>
 
-            {/* Imagem destaque */}
             <div className="relative aspect-video rounded-lg overflow-hidden shadow-xl">
-              <img src="/loja-elegante-produtos-feminino-masculino.jpg" alt="Produtos Aqui Tem Tudo" className="w-full h-full object-cover" />
+              {bannerConfig && bannerConfig.slider_enabled && bannerImages.length > 1 ? (
+                <ImageSlider
+                  images={bannerImages.map((b:any)=>({ src: b.url, alt: bannerConfig.name }))}
+                  effect={bannerConfig.effect || "slide"}
+                  speedMs={Math.max(200, bannerConfig.transition_ms || 4000)}
+                  autoplay
+                  autoplayIntervalMs={Math.max(500, bannerConfig.transition_ms || 4000)}
+                />
+              ) : (
+                <img src={(bannerImages[0]?.url) || "/loja-elegante-produtos-feminino-masculino.jpg"} alt="Produtos Aqui Tem Tudo" className="w-full h-full object-cover" />
+              )}
             </div>
           </div>
         </section>

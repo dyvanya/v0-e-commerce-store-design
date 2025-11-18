@@ -154,3 +154,43 @@ do $$ begin
 end $$;
 
 -- Fim do script
+-- Banners (home)
+create table if not exists public.banner_sets (
+  id serial primary key,
+  name text not null,
+  slider_enabled boolean default true,
+  transition_ms integer default 4000,
+  effect text default 'slide',
+  active boolean default false,
+  active_at timestamptz,
+  created_at timestamptz default now()
+);
+
+create table if not exists public.banner_images (
+  id serial primary key,
+  set_id integer not null references public.banner_sets(id) on delete cascade,
+  url text not null,
+  position integer not null,
+  format text,
+  width integer,
+  height integer,
+  created_at timestamptz default now()
+);
+
+alter table public.banner_sets enable row level security;
+alter table public.banner_images enable row level security;
+
+do $$ begin create policy "banner_sets select anon" on public.banner_sets for select using (true); exception when duplicate_object then null; end $$;
+do $$ begin create policy "banner_sets insert anon" on public.banner_sets for insert with check (true); exception when duplicate_object then null; end $$;
+do $$ begin create policy "banner_sets update anon" on public.banner_sets for update using (true) with check (true); exception when duplicate_object then null; end $$;
+do $$ begin create policy "banner_sets delete anon" on public.banner_sets for delete using (true); exception when duplicate_object then null; end $$;
+
+do $$ begin create policy "banner_images select anon" on public.banner_images for select using (true); exception when duplicate_object then null; end $$;
+do $$ begin create policy "banner_images insert anon" on public.banner_images for insert with check (true); exception when duplicate_object then null; end $$;
+do $$ begin create policy "banner_images update anon" on public.banner_images for update using (true) with check (true); exception when duplicate_object then null; end $$;
+do $$ begin create policy "banner_images delete anon" on public.banner_images for delete using (true); exception when duplicate_object then null; end $$;
+
+insert into storage.buckets (id, name, public)
+select 'banners', 'banners', true
+where not exists (select 1 from storage.buckets where id = 'banners');
+update storage.buckets set public = true where id = 'banners';
