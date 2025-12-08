@@ -71,8 +71,22 @@ export default function AdminPage() {
       setColors(cores || [])
       const { data: tamanhos } = await supabase.from("tamanhos").select("*").order("descricao")
       setSizes(tamanhos || [])
-      const { data: sets } = await supabase.from("banner_sets").select("*").order("created_at", { ascending: false })
-      setBannerSets(sets || [])
+      const { data: sets } = await supabase.from("banner_sets").select("*").order("active", { ascending: false }).order("active_at", { ascending: false }).order("created_at", { ascending: false })
+      let list = sets || []
+      if (!list || list.length === 0) {
+        const { data: created } = await supabase
+          .from("banner_sets")
+          .insert({ name: "Principal", effect: "slide", transition_ms: 4000, slider_enabled: true, active: true, active_at: new Date().toISOString() })
+          .select("*")
+        list = created || []
+      }
+      setBannerSets(list)
+      const active = list.find((s:any)=>s.active) || list[0]
+      setSelectedSet(active || null)
+      if (active) {
+        const { data: imgs } = await supabase.from("banner_images").select("*").eq("set_id", active.id).order("position")
+        setSetImages(imgs || [])
+      }
       setLoading(false)
     })()
   }, [router])
@@ -580,6 +594,16 @@ export default function AdminPage() {
                             <Button size="sm" variant="destructive" onClick={() => handleDelete(item.id)}>
                               Excluir
                             </Button>
+                            <Button
+                              size="sm"
+                              onClick={async ()=>{
+                                if (!supabase) return
+                                await supabase.from("produtos").update({ destaque: !item.destaque }).eq("id", item.id)
+                                setItems((prev)=> prev.map((p)=> p.id===item.id ? { ...p, destaque: !item.destaque } : p))
+                              }}
+                            >
+                              {item.destaque ? "Remover destaque" : "Destacar"}
+                            </Button>
                           </td>
                         </tr>
                       ))}
@@ -687,18 +711,8 @@ export default function AdminPage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
                   <input type="datetime-local" value={setActivateAt} onChange={(e)=>setSetActivateAt(e.target.value)} className="px-3 py-2 border rounded" />
                   <Button
-                    className="bg-primary"
-                    onClick={async ()=>{
-                      if (!supabase) return
-                      const { data } = await supabase.from("banner_sets").insert({ name: setName || "Conjunto", effect: setEffect, transition_ms: setTransition || 4000, slider_enabled: setEnabled, active: false, active_at: setActivateAt ? new Date(setActivateAt).toISOString() : null }).select("*")
-                      const { data: sets } = await supabase.from("banner_sets").select("*").order("created_at", { ascending: false })
-                      setBannerSets(sets || [])
-                      setSelectedSet(data?.[0] || null)
-                      setSetImages([])
-                      setName("")
-                      setSetActivateAt("")
-                    }}
-                  >Criar conjunto</Button>
+                    className="bg-primary" disabled
+                  >Conjunto atual</Button>
                   <select className="px-3 py-2 border rounded" value={selectedSet?.id || ""} onChange={(e)=>{
                     const id = Number(e.target.value)
                     const sel = (bannerSets || []).find((s)=>s.id===id) || null
