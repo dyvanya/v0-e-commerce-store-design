@@ -7,11 +7,12 @@ import { ProductCard } from "@/components/product-card"
 import Link from "next/link"
 import { ArrowRight, Package, Truck, Heart } from "lucide-react"
 import { useEffect, useState } from "react"
-import { supabase, mapDbToProduct, type ProdutoDb } from "@/lib/supabase"
+import { supabase, mapDbToProduct } from "@/lib/supabase"
 import { ImageSlider } from "@/components/image-slider"
+import { productsData } from "@/lib/products-data"
 
 export default function Home() {
-  const [featuredProducts, setFeaturedProducts] = useState<any[]>([])
+  const [featuredProducts, setFeaturedProducts] = useState(productsData.slice(0, 6))
   const [bannerConfig, setBannerConfig] = useState<any | null>(null)
   const [bannerImages, setBannerImages] = useState<any[]>([])
 
@@ -19,7 +20,7 @@ export default function Home() {
     const load = async () => {
       if (!supabase) return
       const { data } = await supabase
-        .from<ProdutoDb>("produtos")
+        .from("produtos")
         .select("*")
         .eq("destaque", true)
         .order("criado_em", { ascending: false })

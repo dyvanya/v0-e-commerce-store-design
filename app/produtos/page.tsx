@@ -6,13 +6,14 @@ import { Footer } from "@/components/footer"
 import { ProductCard } from "@/components/product-card"
 import { Button } from "@/components/ui/button"
 import { Search } from "lucide-react"
-import { supabase, mapDbToProduct, type ProdutoDb } from "@/lib/supabase"
+import { supabase, mapDbToProduct } from "@/lib/supabase"
+import { productsData as initialProductsData } from "@/lib/products-data"
 
 export default function ProdutosPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [selectedPaymentType, setSelectedPaymentType] = useState<string | null>(null)
-  const [productsData, setProductsData] = useState<any[]>([])
+  const [productsData, setProductsData] = useState(initialProductsData)
 
   useEffect(() => {
     const load = async () => {
@@ -21,7 +22,7 @@ export default function ProdutosPage() {
         return
       }
       const { data } = await supabase
-        .from<ProdutoDb>("produtos")
+        .from("produtos")
         .select("*")
         .order("criado_em", { ascending: false })
       if (data) setProductsData(data.map(mapDbToProduct))
