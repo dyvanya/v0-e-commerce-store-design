@@ -10,6 +10,7 @@ import Cart from "@/components/cart"
 import Footer from "@/components/footer"
 import FloatingWhatsApp from "@/components/floating-whatsapp"
 import ChatWidget from "@/components/chat-widget"
+import ButterflyEffects from "@/components/butterfly-effects"
 
 export default function Home() {
   const [isCartOpen, setIsCartOpen] = useState(false)
@@ -55,6 +56,7 @@ export default function Home() {
       <Footer />
       <FloatingWhatsApp />
       <ChatWidget />
+      <ButterflyEffects />
     </div>
   )
 }

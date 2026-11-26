@@ -44,7 +44,7 @@ export default function ProductCard({ product, isFavorite, onToggleFavorite, onA
   const currentMedia = allMedia[currentImageIndex]
 
   return (
-    <div className="bg-card rounded-lg overflow-hidden shadow-sm hover:shadow-md transition group">
+    <div className="product-card bg-card rounded-lg overflow-hidden shadow-sm hover:shadow-md transition group">
       {/* Media Container */}
       <div className="relative bg-secondary/50 aspect-square overflow-hidden">
         {currentMedia.type === "image" ? (
