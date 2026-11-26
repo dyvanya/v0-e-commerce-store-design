@@ -10,13 +10,14 @@ type Butterfly = {
   endX: number
   endY: number
   color: string
-  scale: number
+  size: number
   duration: number
   delay: number
 }
 
-const COLORS = ["#f08ab5", "#a78bfa", "#72c7a1", "#f6ad75", "#72bde8", "#e879b5"]
-const MAX_BUTTERFLIES = 14
+const COLORS = ["#f24f96", "#8957e5", "#16a979", "#f08a24", "#168bd2", "#dd3b9d", "#e6a500", "#27a6a6"]
+const STARTUP_SIZES = [22, 32, 46, 56]
+const MAX_BUTTERFLIES = 22
 
 function ButterflyShape({ color }: { color: string }) {
   return (
@@ -47,18 +48,20 @@ export default function ButterflyEffects() {
       }, Math.max(...items.map((item) => item.duration + item.delay)) + 250)
     }
 
-    const firstFlight = Array.from({ length: 7 }, (_, index): Butterfly => {
+    const firstFlight = Array.from({ length: 18 }, (_, index): Butterfly => {
       const id = nextId.current++
+      const size = STARTUP_SIZES[index % STARTUP_SIZES.length]
+      const startY = window.innerHeight + 24 + Math.random() * 170
       return {
         id,
-        x: 8 + Math.random() * 84,
-        y: 78 + Math.random() * 20,
-        endX: (Math.random() - 0.5) * 48,
-        endY: -(window.innerHeight * (0.6 + Math.random() * 0.4)),
+        x: size / 2 + Math.random() * Math.max(1, window.innerWidth - size),
+        y: startY,
+        endX: (Math.random() - 0.5) * Math.min(window.innerWidth * 0.35, 260),
+        endY: -(startY + window.innerHeight + size),
         color: COLORS[index % COLORS.length],
-        scale: 0.7 + Math.random() * 0.65,
-        duration: 3600 + Math.random() * 1800,
-        delay: Math.random() * 700,
+        size,
+        duration: 6200 + Math.random() * 2000,
+        delay: Math.random() * 1500,
       }
     })
     addButterflies(firstFlight)
@@ -79,8 +82,8 @@ export default function ButterflyEffects() {
         endX: (Math.random() - 0.5) * 190,
         endY: -(100 + Math.random() * 150),
         color,
-        scale: 0.72 + Math.random() * 0.5,
-        duration: 1300 + Math.random() * 500,
+        size: 24 + Math.random() * 22,
+        duration: 1500 + Math.random() * 500,
         delay: 0,
       }
       addButterflies([butterfly])
@@ -99,9 +102,10 @@ export default function ButterflyEffects() {
           style={{
             left: `${butterfly.x}px`,
             top: `${butterfly.y}px`,
+            width: `${butterfly.size}px`,
+            height: `${butterfly.size * 0.84}px`,
             "--flight-x": `${butterfly.endX}px`,
             "--flight-y": `${butterfly.endY}px`,
-            "--butterfly-scale": butterfly.scale,
             "--flight-duration": `${butterfly.duration}ms`,
             animationDelay: `${butterfly.delay}ms`,
           } as CSSProperties}
