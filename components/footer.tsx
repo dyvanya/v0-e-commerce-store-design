@@ -1,80 +1,104 @@
-"use client"
+import { Heart, Mail, Phone, Instagram, ShieldCheck, Lock } from "lucide-react"
+import { WhatsAppIcon } from "@/components/icons"
 
-import Link from "next/link"
-import { Mail, Phone, Instagram } from "lucide-react"
-
-export function Footer() {
+export default function Footer() {
   return (
-    <footer className="bg-secondary border-t border-border">
+    <footer className="bg-card border-t border-border mt-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+          {/* About */}
           <div>
             <h3 className="font-semibold text-foreground mb-4">Sobre Nós</h3>
-            <p className="text-muted-foreground text-sm leading-relaxed">
-              Somos a sua loja de confiança com entrega rápida em até 24 horas. Oferecemos produtos selecionados com
-              pagamento seguro na entrega. Qualidade, preço justo e atendimento personalizado são nosso compromisso.
+            <p className="text-muted-foreground text-sm">
+              Oferecemos produtos de qualidade com entrega segura e atendimento excepcional.
             </p>
           </div>
 
           {/* Links */}
           <div>
-            <h3 className="font-semibold text-foreground mb-4">Links Úteis</h3>
-            <ul className="space-y-2">
+            <h3 className="font-semibold text-foreground mb-4">Links</h3>
+            <ul className="space-y-2 text-sm">
               <li>
-                <Link href="/" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                <a href="#top" className="text-muted-foreground hover:text-primary">
                   Início
-                </Link>
+                </a>
               </li>
               <li>
-                <Link href="/produtos" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                <a href="#products" className="text-muted-foreground hover:text-primary">
                   Produtos
-                </Link>
+                </a>
               </li>
               <li>
-                <Link href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                  Políticas
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h3 className="font-semibold text-foreground mb-4">Atendimento</h3>
-            <ul className="space-y-3 text-sm text-muted-foreground">
-              <li className="flex items-center gap-2">
-                <Phone className="w-4 h-4" />
-                <a href="tel:+5571991108625" className="hover:text-primary transition-colors">
-                  (71) 99110-8625
-                </a>
-              </li>
-              <li className="flex items-center gap-2">
-                <Mail className="w-4 h-4" />
-                <a href="mailto:sac.aquitemtudoo@gmail.com" className="hover:text-primary transition-colors">
-                  SAC.AQUITEMTUDOO@GMAIL.COM
+                <a href="/politica" className="text-muted-foreground hover:text-primary">
+                  Política de Trocas e Privacidade
                 </a>
               </li>
             </ul>
           </div>
 
+          {/* Contact */}
           <div>
-            <h3 className="font-semibold text-foreground mb-4">Siga-nos</h3>
-            <div className="flex flex-col gap-3 text-sm">
-              <a
-                href="https://instagram.com/paguenaentregaoficial__"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-2"
-              >
-                <Instagram className="w-4 h-4" />
-                @paguenaentregaoficial__
-              </a>
-              <p className="text-muted-foreground text-xs">Frete Grátis | Entrega em até 24h</p>
-            </div>
+            <h3 className="font-semibold text-foreground mb-4">Contato</h3>
+            <ul className="space-y-2 text-sm">
+              <li className="flex gap-2 items-center text-muted-foreground hover:text-primary cursor-pointer">
+                <Mail size={16} />
+                <a href="mailto:sac.aquitemtudoo@gmail.com">sac.aquitemtudoo@gmail.com</a>
+              </li>
+              <li className="flex gap-2 items-center text-muted-foreground hover:text-primary cursor-pointer">
+                <Phone size={16} />
+                <a href="tel:+5571991108625">(71) 99110-8625</a>
+              </li>
+            </ul>
+          </div>
+
+          {/* Social */}
+          <div>
+            <h3 className="font-semibold text-foreground mb-4">Redes Sociais</h3>
+            <ul className="space-y-2 text-sm">
+              <li>
+                <a
+                  href="https://instagram.com/paguenaentregaoficial__?igsh=MW9jdDMxNWwzdTl3aA%3D%3D"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex gap-2 items-center text-muted-foreground hover:text-primary transition"
+                >
+                  <Instagram size={16} />
+                  Instagram
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://wa.me/5571991108625"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex gap-2 items-center text-muted-foreground hover:text-primary transition"
+                >
+                  <WhatsAppIcon size={16} />
+                  WhatsApp
+                </a>
+              </li>
+            </ul>
           </div>
         </div>
 
-        <div className="border-t border-border pt-8 text-center text-sm text-muted-foreground">
-          <p>&copy; 2025 AQUI TEM TUDO. Todos os direitos reservados. | Pagamento na entrega com nossos entregadores</p>
+        {/* Trust badges */}
+        <div className="border-t border-border pt-8 pb-2 flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
+          <span className="flex items-center gap-2 text-sm text-muted-foreground">
+            <ShieldCheck size={18} className="text-primary" />
+            Compra 100% Segura
+          </span>
+          <span className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Lock size={18} className="text-primary" />
+            Dados Protegidos
+          </span>
+          <span className="text-sm font-medium text-muted-foreground">Pix · Cartão · Na Entrega</span>
+        </div>
+
+        {/* Copyright */}
+        <div className="border-t border-border pt-6">
+          <p className="text-center text-muted-foreground text-sm flex items-center justify-center gap-1">
+            Feito com <Heart size={16} className="fill-accent text-accent" /> por ÁGAPE © 2025
+          </p>
         </div>
       </div>
     </footer>
