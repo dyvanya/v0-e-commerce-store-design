@@ -11,74 +11,79 @@ export function Header() {
   const { items } = useCart()
 
   return (
-    <header className="sticky top-0 z-50 bg-white border-b border-border">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <Link href="/" className="flex-shrink-0">
-            <div className="text-2xl font-bold text-primary">AQUI TEM TUDO</div>
+    <header className="sticky top-0 z-50 border-b border-primary/10 bg-white/90 backdrop-blur-xl">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex h-[72px] items-center justify-between">
+          <Link href="/" className="shrink-0 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            <span className="text-xl font-extrabold tracking-tight text-primary sm:text-2xl">AQUI TEM TUDO</span>
           </Link>
 
-          {/* Menu Desktop */}
-          <nav className="hidden md:flex items-center gap-8">
-            <Link href="/produtos" className="text-foreground hover:text-primary transition-colors">
+          <nav aria-label="Navegação principal" className="hidden items-center gap-8 md:flex">
+            <Link href="/produtos" className="text-sm font-medium text-foreground/85 transition-colors hover:text-primary">
               Produtos
             </Link>
-            <Link href="/#sobre" className="text-foreground hover:text-primary transition-colors">
+            <Link href="/#sobre" className="text-sm font-medium text-foreground/85 transition-colors hover:text-primary">
               Sobre
             </Link>
-            <Link href="/#contato" className="text-foreground hover:text-primary transition-colors">
+            <Link href="/#contato" className="text-sm font-medium text-foreground/85 transition-colors hover:text-primary">
               Contato
             </Link>
           </nav>
 
-          {/* Actions */}
-          <div className="hidden md:flex items-center gap-4">
-            <Button variant="ghost" size="icon">
-              <Search className="w-5 h-5" />
+          <div className="hidden items-center gap-3 md:flex">
+            <Button asChild variant="ghost" size="icon" className="rounded-full text-foreground/80 hover:bg-primary/10 hover:text-primary">
+              <Link href="/produtos" aria-label="Buscar produtos">
+                <Search className="size-5" />
+              </Link>
             </Button>
-            <Link href="/carrinho">
-              <Button variant="outline" size="icon" className="relative bg-transparent">
-                <ShoppingCart className="w-5 h-5" />
+            <Button asChild variant="outline" size="icon" className="rounded-full border-primary/15 bg-white shadow-sm hover:bg-primary/5">
+              <Link href="/carrinho" aria-label={`Carrinho${items.length > 0 ? `, ${items.length} itens` : ""}`} className="relative">
+                <ShoppingCart className="size-5" />
                 {items.length > 0 && (
-                  <span className="absolute top-1 right-1 w-4 h-4 bg-accent text-white text-xs rounded-full flex items-center justify-center">
+                  <span className="absolute -right-1 -top-1 flex size-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
                     {items.length}
                   </span>
                 )}
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </div>
 
-          {/* Mobile Menu Button */}
-          <button className="md:hidden p-2" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-            {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          <button
+            type="button"
+            className="rounded-full p-2 text-foreground transition-colors hover:bg-primary/10 md:hidden"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            aria-label={isMenuOpen ? "Fechar menu" : "Abrir menu"}
+            aria-expanded={isMenuOpen}
+          >
+            {isMenuOpen ? <X className="size-6" /> : <Menu className="size-6" />}
           </button>
         </div>
 
-        {/* Mobile Menu */}
         {isMenuOpen && (
-          <div className="md:hidden pb-4 border-t border-border">
-            <nav className="flex flex-col gap-4 pt-4">
-              <Link href="/produtos" className="text-foreground hover:text-primary transition-colors">
+          <div className="border-t border-primary/10 pb-4 md:hidden">
+            <nav aria-label="Navegação móvel" className="flex flex-col gap-3 pt-4">
+              <Link href="/produtos" className="rounded-lg px-3 py-2 text-foreground transition-colors hover:bg-primary/5 hover:text-primary" onClick={() => setIsMenuOpen(false)}>
                 Produtos
               </Link>
-              <Link href="/#sobre" className="text-foreground hover:text-primary transition-colors">
+              <Link href="/#sobre" className="rounded-lg px-3 py-2 text-foreground transition-colors hover:bg-primary/5 hover:text-primary" onClick={() => setIsMenuOpen(false)}>
                 Sobre
               </Link>
-              <Link href="/#contato" className="text-foreground hover:text-primary transition-colors">
+              <Link href="/#contato" className="rounded-lg px-3 py-2 text-foreground transition-colors hover:bg-primary/5 hover:text-primary" onClick={() => setIsMenuOpen(false)}>
                 Contato
               </Link>
               <div className="flex gap-2 pt-2">
-                <Button variant="outline" className="flex-1 bg-transparent" size="sm">
-                  <Search className="w-4 h-4 mr-2" />
-                  Buscar
+                <Button asChild variant="outline" className="flex-1 rounded-full border-primary/15 bg-white" size="sm">
+                  <Link href="/produtos">
+                    <Search className="size-4" />
+                    Buscar
+                  </Link>
                 </Button>
-                <Link href="/carrinho" className="flex-1">
-                  <Button variant="outline" className="w-full bg-transparent" size="sm">
-                    <ShoppingCart className="w-4 h-4 mr-2" />
+                <Button asChild variant="outline" className="flex-1 rounded-full border-primary/15 bg-white" size="sm">
+                  <Link href="/carrinho">
+                    <ShoppingCart className="size-4" />
                     Carrinho {items.length > 0 && `(${items.length})`}
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
               </div>
             </nav>
           </div>

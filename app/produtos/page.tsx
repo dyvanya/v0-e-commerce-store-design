@@ -55,20 +55,21 @@ export default function ProdutosPage() {
 
       <main className="flex-1">
         {/* Header */}
-        <section className="bg-secondary/30 py-12">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4">Catálogo de Produtos</h1>
+        <section className="bg-gradient-to-br from-secondary/45 via-background to-accent/10 py-12 md:py-16">
+          <div className="mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8">
+            <h1 className="mb-4 text-3xl font-bold tracking-tight text-foreground md:text-4xl">Catálogo de Produtos</h1>
             <p className="text-muted-foreground">Encontre os produtos perfeitos para você</p>
+            <div aria-hidden="true" className="mx-auto mt-5 h-1 w-14 rounded-full bg-gradient-to-r from-primary/40 via-accent to-secondary" />
           </div>
         </section>
 
         {/* Filtros e Produtos */}
-        <section className="py-12">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <section className="py-10 md:py-14">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
               {/* Filtros */}
               <div className="lg:col-span-1">
-                <div className="bg-white rounded-lg p-6 border border-border sticky top-24">
+                <div className="sticky top-24 rounded-3xl border border-primary/10 bg-white/90 p-5 shadow-sm backdrop-blur-sm sm:p-6">
                   <h3 className="font-semibold text-foreground mb-6">Filtros</h3>
 
                   {/* Busca */}
@@ -80,7 +81,7 @@ export default function ProdutosPage() {
                         placeholder="Digite aqui..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                        className="w-full rounded-full border border-primary/15 bg-background px-4 py-2.5 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                       />
                       <Search className="absolute right-3 top-2.5 w-4 h-4 text-muted-foreground" />
                     </div>
@@ -93,7 +94,7 @@ export default function ProdutosPage() {
                       <Button
                         variant={selectedCategory === null ? "default" : "outline"}
                         size="sm"
-                        className="w-full justify-start"
+                        className="w-full justify-start rounded-full"
                         onClick={() => setSelectedCategory(null)}
                       >
                         Todas
@@ -119,7 +120,7 @@ export default function ProdutosPage() {
                       <Button
                         variant={selectedPaymentType === null ? "default" : "outline"}
                         size="sm"
-                        className="w-full justify-start text-xs"
+                        className="w-full justify-start rounded-full text-xs"
                         onClick={() => setSelectedPaymentType(null)}
                       >
                         Todos
@@ -129,7 +130,7 @@ export default function ProdutosPage() {
                           key={type.value}
                           variant={selectedPaymentType === type.value ? "default" : "outline"}
                           size="sm"
-                          className="w-full justify-start text-xs"
+                          className="w-full justify-start rounded-full text-xs"
                           onClick={() => setSelectedPaymentType(type.value)}
                         >
                           {type.label}
