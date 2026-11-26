@@ -10,8 +10,9 @@ import { ImageSlider } from "@/components/image-slider"
 import { Star, ShoppingCart, Heart, Share2, MessageCircle, Check } from "lucide-react"
 import Link from "next/link"
 import { useCart } from "@/hooks/use-cart"
-import { supabase, mapDbToProduct, type ProdutoDb } from "@/lib/supabase"
+import { supabase, mapDbToProduct } from "@/lib/supabase"
 import { formatBRL } from "@/lib/utils"
+import { productsData } from "@/lib/products-data"
 
 interface ProductPageProps {
   params: Promise<{ id: string }>
@@ -30,12 +31,17 @@ export default function ProductPage({ params }: ProductPageProps) {
 
   useEffect(() => {
     const load = async () => {
+      const localProduct = productsData.find((item) => item.id === id) ?? null
+      setProduct(localProduct)
+      setMainImage(localProduct?.image ?? null)
+      setRelatedProducts(productsData.filter((item) => item.id !== id).slice(0, 3))
+
       if (!supabase) {
         setLoading(false)
         return
       }
       const { data, error } = await supabase
-        .from<ProdutoDb>("produtos")
+        .from("produtos")
         .select("*")
         .eq("id", Number(id))
         .maybeSingle()
@@ -69,7 +75,7 @@ export default function ProductPage({ params }: ProductPageProps) {
         setAvailableColors((cores || []).filter((c: any) => c.ativo))
         setAvailableSizes((tamanhos || []).filter((t: any) => t.ativo))
       }
-      const { data: list } = await supabase.from<ProdutoDb>("produtos").select("*").limit(3)
+      const { data: list } = await supabase.from("produtos").select("*").limit(3)
       if (list) setRelatedProducts(list.map(mapDbToProduct).filter((p) => p.id !== id))
       setLoading(false)
     }

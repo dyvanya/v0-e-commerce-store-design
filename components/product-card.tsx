@@ -1,7 +1,6 @@
 "use client"
-import Link from "next/link"
-import type React from "react"
 
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ShoppingCart, Star } from "lucide-react"
@@ -18,75 +17,69 @@ export function ProductCard({ product }: ProductCardProps) {
   const { addItem } = useCart()
   const [added, setAdded] = useState(false)
 
-  const handleAddToCart = (e: React.MouseEvent) => {
-    e.preventDefault()
+  const handleAddToCart = () => {
     addItem(product, 1)
     setAdded(true)
     setTimeout(() => setAdded(false), 1500)
   }
 
   return (
-    <Link href={`/produto/${product.id}`}>
-      <div className="bg-white rounded-lg overflow-hidden border border-border hover:shadow-lg transition-shadow cursor-pointer h-full flex flex-col">
-        {/* Imagem do Produto */}
-        <div className="relative aspect-square overflow-hidden bg-muted">
+    <article className="group flex h-full flex-col overflow-hidden rounded-3xl border border-primary/10 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-foreground/5">
+      <Link href={`/produto/${product.id}`} className="flex flex-1 flex-col focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary">
+        <div className="relative aspect-square overflow-hidden bg-secondary/20">
           <img
             src={product.image || "/placeholder.svg"}
             alt={product.name}
-            className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+            className="size-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
-          {/* Badge de Tipo de Pagamento */}
-          <div className="absolute top-3 right-3">
+          <div className="absolute right-3 top-3">
             <Badge
               variant={product.paymentType === "cod" ? "default" : "secondary"}
-              className="text-xs"
+              className="rounded-full border border-white/70 bg-white/90 px-3 py-1 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm"
             >
               {product.paymentType === "cod"
                 ? "Na Entrega"
                 : product.paymentType === "delivery"
-                ? "Entrega Pessoal"
-                : "Pagamento Antecipado"}
+                  ? "Entrega Pessoal"
+                  : "Pagamento Antecipado"}
             </Badge>
           </div>
         </div>
 
-        {/* Conteúdo */}
-        <div className="flex flex-col flex-grow p-4">
-          <h3 className="font-semibold text-foreground mb-2 line-clamp-2 hover:text-primary">{product.name}</h3>
-
-          {/* Descrição */}
-          <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{product.description}</p>
-
-          {/* Rating */}
+        <div className="flex flex-1 flex-col p-4 sm:p-5">
+          <h3 className="mb-2 line-clamp-2 font-semibold leading-snug text-foreground transition-colors group-hover:text-primary">
+            {product.name}
+          </h3>
+          <p className="mb-3 line-clamp-2 text-sm leading-6 text-muted-foreground">{product.description}</p>
           {product.rating && (
-            <div className="flex items-center gap-1 mb-3">
-              <div className="flex items-center">
+            <div className="mt-auto flex items-center gap-1.5 pt-1">
+              <div className="flex items-center" aria-label={`Avaliação ${product.rating} de 5 estrelas`}>
                 {[...Array(5)].map((_, i) => (
                   <Star
                     key={i}
-                    className={`w-4 h-4 ${
-                      i < Math.floor(product.rating!) ? "fill-primary text-primary" : "text-muted"
-                    }`}
+                    aria-hidden="true"
+                    className={`size-4 ${i < Math.floor(product.rating!) ? "fill-primary text-primary" : "text-muted"}`}
                   />
                 ))}
               </div>
               <span className="text-xs text-muted-foreground">({product.reviews})</span>
             </div>
           )}
-
-          {/* Preço e Botão */}
-          <div className="flex items-center justify-between mt-auto pt-4 border-t border-border">
-            <span className="text-lg font-bold text-primary">{formatBRL(product.price)}</span>
-            <Button
-              size="sm"
-              className={`transition-colors ${added ? "bg-green-600 hover:bg-green-600" : "bg-primary hover:bg-primary/90"}`}
-              onClick={handleAddToCart}
-            >
-              <ShoppingCart className="w-4 h-4" />
-            </Button>
-          </div>
         </div>
+      </Link>
+
+      <div className="flex items-center justify-between border-t border-primary/10 px-4 py-4 sm:px-5">
+        <span className="text-lg font-bold tracking-tight text-foreground">{formatBRL(product.price)}</span>
+        <Button
+          type="button"
+          size="icon"
+          className={`size-10 rounded-full shadow-sm transition-colors ${added ? "bg-emerald-700 hover:bg-emerald-700" : "bg-primary hover:bg-primary/90"}`}
+          onClick={handleAddToCart}
+          aria-label={added ? `${product.name} adicionado ao carrinho` : `Adicionar ${product.name} ao carrinho`}
+        >
+          <ShoppingCart className="size-4" />
+        </Button>
       </div>
-    </Link>
+    </article>
   )
 }
