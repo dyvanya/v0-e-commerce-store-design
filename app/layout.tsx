@@ -8,8 +8,8 @@ const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Loja Elegante - Produtos Exclusivos",
-  description: "Loja de produtos com cash on delivery e entrega pessoal",
+  title: "ÁGAPE - Loja Online de Qualidade",
+  description: "ÁGAPE - Compre produtos com segurança. Pagamento na entrega ou entrega pessoal.",
   generator: "v0.app",
 }
 
@@ -19,11 +19,11 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="pt-BR" suppressHydrationWarning>
-      <body className={`font-sans antialiased`} suppressHydrationWarning>
+    <html lang="pt-BR">
+      <body className={`font-sans antialiased`}>
         {children}
         <Analytics />
-      </body>
+</body>
     </html>
   )
 }

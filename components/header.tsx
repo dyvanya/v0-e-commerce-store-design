@@ -1,86 +1,80 @@
 "use client"
 
+import { ShoppingBag, Menu, X } from "lucide-react"
 import { useState } from "react"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { ShoppingCart, Menu, X, Search } from "lucide-react"
-import { useCart } from "@/hooks/use-cart"
 
-export function Header() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const { items } = useCart()
+export default function Header({ cartCount, onCartClick }: { cartCount: number; onCartClick: () => void }) {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   return (
-    <header className="sticky top-0 z-50 bg-white border-b border-border">
+    <header className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b border-border shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" className="flex-shrink-0">
-            <div className="text-2xl font-bold text-primary">AQUI TEM TUDO</div>
-          </Link>
-
-          {/* Menu Desktop */}
-          <nav className="hidden md:flex items-center gap-8">
-            <Link href="/produtos" className="text-foreground hover:text-primary transition-colors">
-              Produtos
-            </Link>
-            <Link href="/#sobre" className="text-foreground hover:text-primary transition-colors">
-              Sobre
-            </Link>
-            <Link href="/#contato" className="text-foreground hover:text-primary transition-colors">
-              Contato
-            </Link>
-          </nav>
-
-          {/* Actions */}
-          <div className="hidden md:flex items-center gap-4">
-            <Button variant="ghost" size="icon">
-              <Search className="w-5 h-5" />
-            </Button>
-            <Link href="/carrinho">
-              <Button variant="outline" size="icon" className="relative bg-transparent">
-                <ShoppingCart className="w-5 h-5" />
-                {items.length > 0 && (
-                  <span className="absolute top-1 right-1 w-4 h-4 bg-accent text-white text-xs rounded-full flex items-center justify-center">
-                    {items.length}
-                  </span>
-                )}
-              </Button>
-            </Link>
+          <div className="flex-shrink-0">
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              ÁGAPE
+            </h1>
           </div>
 
-          {/* Mobile Menu Button */}
-          <button className="md:hidden p-2" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-            {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex items-center gap-8">
+            <a href="#top" className="text-foreground hover:text-primary transition">
+              Início
+            </a>
+            <a href="#products" className="text-foreground hover:text-primary transition">
+              Produtos
+            </a>
+            <a href="#about" className="text-foreground hover:text-primary transition">
+              Sobre
+            </a>
+          </nav>
+
+          {/* Cart and Mobile Menu */}
+          <div className="flex items-center gap-4">
+            <button onClick={onCartClick} className="relative p-2 text-foreground hover:text-primary transition">
+              <ShoppingBag size={24} />
+              {cartCount > 0 && (
+                <span className="absolute top-1 right-1 bg-accent text-accent-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold">
+                  {cartCount}
+                </span>
+              )}
+            </button>
+
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="md:hidden p-2 text-foreground hover:text-primary transition"
+            >
+              {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+          </div>
         </div>
 
-        {/* Mobile Menu */}
-        {isMenuOpen && (
+        {/* Mobile Navigation */}
+        {isMobileMenuOpen && (
           <div className="md:hidden pb-4 border-t border-border">
-            <nav className="flex flex-col gap-4 pt-4">
-              <Link href="/produtos" className="text-foreground hover:text-primary transition-colors">
-                Produtos
-              </Link>
-              <Link href="/#sobre" className="text-foreground hover:text-primary transition-colors">
-                Sobre
-              </Link>
-              <Link href="/#contato" className="text-foreground hover:text-primary transition-colors">
-                Contato
-              </Link>
-              <div className="flex gap-2 pt-2">
-                <Button variant="outline" className="flex-1 bg-transparent" size="sm">
-                  <Search className="w-4 h-4 mr-2" />
-                  Buscar
-                </Button>
-                <Link href="/carrinho" className="flex-1">
-                  <Button variant="outline" className="w-full bg-transparent" size="sm">
-                    <ShoppingCart className="w-4 h-4 mr-2" />
-                    Carrinho {items.length > 0 && `(${items.length})`}
-                  </Button>
-                </Link>
-              </div>
-            </nav>
+            <a
+              href="#top"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="block py-2 text-foreground hover:text-primary transition"
+            >
+              Início
+            </a>
+            <a
+              href="#products"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="block py-2 text-foreground hover:text-primary transition"
+            >
+              Produtos
+            </a>
+            <a
+              href="#about"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="block py-2 text-foreground hover:text-primary transition"
+            >
+              Sobre
+            </a>
           </div>
         )}
       </div>
